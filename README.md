@@ -3,6 +3,8 @@
 [![NPM](https://img.shields.io/npm/v/sf-cat.svg?label=sf-cat)](https://www.npmjs.com/package/sf-cat)
 [![Downloads/week](https://img.shields.io/npm/dw/sf-cat.svg)](https://npmjs.org/package/sf-cat)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/mcarvin8/sf-cat/main/LICENSE.md)
+[![Maintainability](https://qlty.sh/gh/mcarvin8/projects/sf-cat/maintainability.svg)](https://qlty.sh/gh/mcarvin8/projects/sf-cat)
+[![Code Coverage](https://qlty.sh/gh/mcarvin8/projects/sf-cat/coverage.svg)](https://qlty.sh/gh/mcarvin8/projects/sf-cat)
 
 <!-- TABLE OF CONTENTS -->
 <details>
