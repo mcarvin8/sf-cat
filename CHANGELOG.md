@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/mcarvin8/sf-cat/compare/v1.0.3...v1.0.4) (2025-07-14)
+
+
+### Bug Fixes
+
+* map issue type in rule map ([4503f67](https://github.com/mcarvin8/sf-cat/commit/4503f67182d189786c15803e44fc29ce9f1e0e9b))
+
 ## [1.0.3](https://github.com/mcarvin8/sf-cat/compare/v1.0.2...v1.0.3) (2025-07-14)
 
 
