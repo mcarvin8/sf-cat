@@ -28,7 +28,7 @@ This enables developers to enforce Salesforce-specific code quality rules within
 sf plugins install sf-cat@x.y.z
 ```
 
-## 🔍 Why Use This Plugin?
+## Why Use This Plugin?
 
 Salesforce Code Analyzer is a powerful tool for static analysis of Apex, Visualforce, and LWC code. It integrates engines like PMD and ESLint, helping Salesforce developers write secure, performant, and maintainable code.
 
@@ -41,7 +41,7 @@ That’s where `sf-cat` comes in:
 ✅ Enables seamless inclusion in `sonar-scanner` reports  
 ✅ Allows teams to view Salesforce-specific quality violations in the same place as other code
 
-## 🚀 How to Use
+## How to Use
 
 ### Step 1: Run Salesforce Code Analyzer
 
@@ -52,7 +52,7 @@ sf code-analyzer run --workspace "./force-app/main/default/" --rule-selector Rec
 ### Step 2: Convert to SonarQube format
 
 ```
-sf sf-cat transform -j "output.json" -r "results.json"
+sf cat transform -j "output.json" -r "results.json"
 ```
 
 ### Step 3: Run SonarQube scan with converted issues

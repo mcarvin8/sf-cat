@@ -22,7 +22,10 @@ export type CodeAnalyzerOutput = {
 
 export type SonarQubeIssue = {
   ruleId: string;
+  engineId: string;
+  severity: string;
   effortMinutes: number;
+  type: string;
   primaryLocation: {
     message: string;
     filePath: string;

@@ -38,7 +38,10 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
     const loc = v.locations[v.primaryLocationIndex];
     const issue: SonarQubeIssue = {
       ruleId,
+      engineId: v.engine,
+      severity: severityMap[v.severity] || 'MAJOR',
       effortMinutes: 5,
+      type: 'CODE_SMELL',
       primaryLocation: {
         message: v.message,
         filePath: loc.file.replace(/\\/g, '/'),
