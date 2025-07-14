@@ -126,5 +126,38 @@ describe('convertToSonarQubeFormat unit tests', () => {
     };
 
     expect(output.rules[0].severity).toBe('MAJOR'); // fallback triggered
+    expect(output.issues[0].type).toBe('VULNERABILITY');
+  });
+  it('should classify issue as BUG when tag includes "bug"', async () => {
+    const bugTagInput: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'LogicFlaw',
+          engine: 'pmd',
+          severity: 3,
+          tags: ['errorprone', 'reliability'],
+          primaryLocationIndex: 0,
+          message: 'This code may result in unexpected behavior.',
+          locations: [
+            {
+              file: 'force-app/main/default/classes/BuggyLogic.cls',
+              startLine: 15,
+              endLine: 15,
+            },
+          ],
+        },
+      ],
+    };
+
+    await writeFile(tempInputPath, JSON.stringify(bugTagInput, null, 2));
+    await convertToSonarQubeFormat(tempInputPath, tempOutputPath);
+
+    const outputRaw = await readFile(tempOutputPath, 'utf8');
+    const output = JSON.parse(outputRaw) as {
+      rules: SonarQubeRule[];
+      issues: SonarQubeIssue[];
+    };
+
+    expect(output.issues[0].type).toBe('BUG');
   });
 });

@@ -36,12 +36,13 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
     }
 
     const loc = v.locations[v.primaryLocationIndex];
+    const issueType = mapIssueType(v.tags);
     const issue: SonarQubeIssue = {
       ruleId,
       engineId: v.engine,
       severity: severityMap[v.severity] || 'MAJOR',
       effortMinutes: 5,
-      type: 'CODE_SMELL',
+      type: issueType,
       primaryLocation: {
         message: v.message,
         filePath: loc.file.replace(/\\/g, '/'),
@@ -61,4 +62,15 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
   };
 
   await writeFile(outputPath, JSON.stringify(output, null, 2));
+}
+/*
+Map issue types to the COMMON_TAGS
+https://github.com/forcedotcom/code-analyzer-core/blob/dev/packages/code-analyzer-engine-api/src/rules.ts
+*/
+function mapIssueType(tags: string[]): 'BUG' | 'VULNERABILITY' | 'CODE_SMELL' {
+  const tagSet = new Set(tags.map((tag) => tag.toLowerCase()));
+
+  if (tagSet.has('security')) return 'VULNERABILITY'; // SECURITY → VULNERABILITY
+  if (tagSet.has('errorprone')) return 'BUG'; // ERROR_PRONE → BUG
+  return 'CODE_SMELL'; // Everything else → CODE_SMELL
 }
