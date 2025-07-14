@@ -71,7 +71,7 @@ describe('convertToSonarQubeFormat non-unit tests', () => {
       id: 'AvoidOldSalesforceApiVersions',
       engineId: 'regex',
       type: 'CODE_SMELL',
-      severity: 'MAJOR',
+      severity: 'CRITICAL',
     });
 
     expect(output.issues[0].primaryLocation.filePath).toBe('force-app/main/default/classes/OldApi.cls');

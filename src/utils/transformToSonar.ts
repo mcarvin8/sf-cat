@@ -11,11 +11,11 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
   for (const v of input.violations) {
     const ruleId = v.rule;
     const severityMap: Record<number, string> = {
-      1: 'MINOR',
-      2: 'MAJOR',
-      3: 'CRITICAL',
-      4: 'BLOCKER',
-      5: 'INFO',
+      1: 'BLOCKER', // Critical
+      2: 'CRITICAL', // High
+      3: 'MAJOR', // Moderate
+      4: 'MINOR', // Low
+      5: 'INFO', // Info
     };
 
     // Construct rule if not already added
