@@ -1,7 +1,7 @@
 {
   "name": "sf-cat",
   "description": "Transform Salesforce Code Analyzer reports into SonarQube generic issue data format.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
     "@oclif/core": "^4.4.0",
     "@salesforce/core": "^8.12.0",
