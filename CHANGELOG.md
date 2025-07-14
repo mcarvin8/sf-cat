@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/mcarvin8/sf-cat/compare/v1.0.1...v1.0.2) (2025-07-14)
+
+
+### Bug Fixes
+
+* remove columns ([a6ca87f](https://github.com/mcarvin8/sf-cat/commit/a6ca87fb4852f89f5ec96d6be63a3207cb89c5b6))
+
 ## [1.0.1](https://github.com/mcarvin8/sf-cat/compare/v1.0.0...v1.0.1) (2025-07-14)
 
 
