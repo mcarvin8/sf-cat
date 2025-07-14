@@ -20,8 +20,7 @@
 - [License](#license)
 </details>
 
-**`sf-cat` is a Salesforce CLI plugin that converts output from Salesforce Code Analyzer into SonarQube-compatible format.**  
-This enables developers to enforce Salesforce-specific code quality rules within centralized SonarQube pipelines and dashboards.
+**`sf-cat` is a Salesforce CLI plugin that converts output from Salesforce Code Analyzer into SonarQube-compatible format.** This enables development teams to suface Salesforce-specific code quality results from multiple scanning engines directly within 1 SonarQube project.
 
 ## Install
 
@@ -38,9 +37,9 @@ But SonarQube is often used as a central platform to consolidate code quality re
 Unfortunately, **Salesforce Code Analyzer output is not directly compatible with SonarQube**.
 
 That’s where `sf-cat` comes in:  
-✅ Converts Salesforce Code Analyzer JSON to [SonarQube's Generic Issue Data format](https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/generic-issue/)  
+✅ Converts Salesforce Code Analyzer JSON to [SonarQube's Generic Issue Data format](https://docs.sonarsource.com/sonarqube-cloud/enriching/generic-issue-data/)  
 ✅ Enables seamless inclusion in `sonar-scanner` reports  
-✅ Allows teams to view Salesforce-specific quality violations in the same place as other code
+✅ Allows teams to view Salesforce-specific quality violations in the same place as other code and integrate it into DevOps platforms — enabling a unified view of code quality across the entire stack
 
 ## Notes on Column Data
 
