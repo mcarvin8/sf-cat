@@ -17,7 +17,7 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
       4: 'MINOR', // Low
       5: 'INFO', // Info
     };
-
+    const issueType = mapIssueType(v.tags);
     // Construct rule if not already added
     if (!ruleMap.has(ruleId)) {
       ruleMap.set(ruleId, {
@@ -26,7 +26,7 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
         description: v.message,
         engineId: v.engine,
         cleanCodeAttribute: 'FORMATTED',
-        type: 'CODE_SMELL',
+        type: issueType,
         severity: severityMap[v.severity] || 'MAJOR',
         impacts: v.tags.map((tag) => ({
           softwareQuality: tag.toUpperCase(),
@@ -36,7 +36,6 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
     }
 
     const loc = v.locations[v.primaryLocationIndex];
-    const issueType = mapIssueType(v.tags);
     const issue: SonarQubeIssue = {
       ruleId,
       engineId: v.engine,
