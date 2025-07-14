@@ -73,9 +73,7 @@ describe('convertToSonarQubeFormat unit tests', () => {
     expect(output.issues[0].primaryLocation.filePath).toBe('force-app/main/default/classes/OldApi.cls');
     expect(output.issues[0].primaryLocation.textRange).toMatchObject({
       startLine: 1,
-      startColumn: 5,
       endLine: 1,
-      endColumn: 20,
     });
   });
 
@@ -111,9 +109,7 @@ describe('convertToSonarQubeFormat unit tests', () => {
             {
               file: 'force-app/main/default/classes/SecurityRisk.cls',
               startLine: 10,
-              startColumn: 1,
               endLine: 10,
-              endColumn: 5,
             },
           ],
         },

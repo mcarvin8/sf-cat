@@ -47,9 +47,7 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
         filePath: loc.file.replace(/\\/g, '/'),
         textRange: {
           startLine: loc.startLine,
-          startColumn: loc.startColumn,
           endLine: loc.endLine,
-          endColumn: loc.endColumn,
         },
       },
     };

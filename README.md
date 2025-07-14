@@ -12,6 +12,7 @@
 
 - [Install](#install)
 - [Why Use This Plugin?](#why-use-this-plugin)
+- [Notes on Column Data](#notes-on-column-data)
 - [How to Use](#how-to-use)
 - [Command](#command)
   - [`sf cat transform`](#sf-cat-transform)
@@ -40,6 +41,14 @@ That’s where `sf-cat` comes in:
 ✅ Converts Salesforce Code Analyzer JSON to [SonarQube's Generic Issue Data format](https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/generic-issue/)  
 ✅ Enables seamless inclusion in `sonar-scanner` reports  
 ✅ Allows teams to view Salesforce-specific quality violations in the same place as other code
+
+## Notes on Column Data
+
+Salesforce Code Analyzer output sometimes contains `startColumn` and `endColumn` values that exceed the actual length of the line in the source file.
+
+SonarQube enforces strict bounds on these values and will fail the scan if a column offset exceeds the line length.
+
+To prevent such failures, `sf-cat` automatically removes column values (`startColumn`, `endColumn`) from all issues reported by the Salesforce Code Analyzer. This ensures compatibility with SonarQube while preserving line-level highlighting.
 
 ## How to Use
 
