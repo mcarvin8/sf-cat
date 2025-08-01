@@ -3,7 +3,7 @@
   "description": "Transform Salesforce Code Analyzer reports into SonarQube generic issue data format.",
   "version": "1.0.4",
   "dependencies": {
-    "@oclif/core": "^4.4.0",
+    "@oclif/core": "^4.5.2",
     "@salesforce/core": "^8.12.0",
     "@salesforce/sf-plugins-core": "^12.2.2"
   },
