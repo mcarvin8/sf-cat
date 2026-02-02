@@ -1,0 +1,23 @@
+src/utils/transformToSonar.ts
+  2a570fe641d03cdf 65-70,75,77-78,80-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "4dd1803c85f955aecf90a34c9ade9183d995f531",
+  "prompts": {
+    "2a570fe641d03cdf": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "09162c2e-d853-4d3e-b4ae-2b841bf079b2",
+        "model": "default"
+      },
+      "human_author": "Matt Carvin <90224411+mcarvin8@users.noreply.github.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 7,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
