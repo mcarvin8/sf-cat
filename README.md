@@ -1,4 +1,4 @@
-# `sf-cat`
+# sf-cat
 
 [![NPM](https://img.shields.io/npm/v/sf-cat.svg?label=sf-cat)](https://www.npmjs.com/package/sf-cat)
 [![Downloads/week](https://img.shields.io/npm/dw/sf-cat.svg)](https://npmjs.org/package/sf-cat)
@@ -6,21 +6,17 @@
 [![Maintainability](https://qlty.sh/gh/mcarvin8/projects/sf-cat/maintainability.svg)](https://qlty.sh/gh/mcarvin8/projects/sf-cat)
 [![Code Coverage](https://qlty.sh/gh/mcarvin8/projects/sf-cat/coverage.svg)](https://qlty.sh/gh/mcarvin8/projects/sf-cat)
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
+A Salesforce CLI plugin that converts Salesforce Code Analyzer output into SonarQube's Generic Issue Data format — so you can surface Salesforce code quality results in SonarQube alongside the rest of your stack.
+
+## Table of Contents
 
 - [Install](#install)
-- [Why Use This Plugin?](#why-use-this-plugin)
-- [Notes on Column Data](#notes-on-column-data)
-- [How to Use](#how-to-use)
-- [Command](#command)
-  - [`sf cat transform`](#sf-cat-transform)
+- [Why sf-cat?](#why-sf-cat)
+- [Quick Start](#quick-start)
+- [Command Reference](#command-reference)
+- [Column Data Handling](#column-data-handling)
 - [Issues](#issues)
 - [License](#license)
-</details>
-
-**`sf-cat` is a Salesforce CLI plugin that converts output from Salesforce Code Analyzer into SonarQube-compatible format.** This enables development teams to suface Salesforce-specific code quality results from multiple scanning engines directly within 1 SonarQube project.
 
 ## Install
 
@@ -28,81 +24,73 @@
 sf plugins install sf-cat@x.y.z
 ```
 
-## Why Use This Plugin?
+## Why sf-cat?
 
-Salesforce Code Analyzer is a tool for developers to maintain high standards of code quality and efficiency by identifying issues such as security vulnerabilities, performance bottlenecks, and violations of coding best practices. It leverages various scanning engines like PMD, ESLint, RetireJS, and Salesforce Graph Engine, to analyze code in Apex, Visualforce, Flows, and Lightning components. 
+**Salesforce Code Analyzer** scans Apex, Visualforce, Flows, and Lightning components using PMD, ESLint, RetireJS, and Salesforce Graph Engine — catching security issues, performance problems, and best-practice violations.
 
-But SonarQube is often used as a central platform to consolidate code quality results across repositories and languages — including CI pipelines, pull request gating, and dashboards.
+**SonarQube** is where many teams centralize code quality: CI pipelines, PR checks, and dashboards.
 
-Unfortunately, **Salesforce Code Analyzer output is not directly compatible with SonarQube**.
+The problem: Code Analyzer output isn't compatible with SonarQube.
 
-That’s where `sf-cat` comes in:  
-✅ Converts Salesforce Code Analyzer JSON to [SonarQube's Generic Issue Data format](https://docs.sonarsource.com/sonarqube-cloud/enriching/generic-issue-data/)  
-✅ Enables seamless inclusion in `sonar-scanner` reports  
-✅ Allows teams to view Salesforce-specific quality violations in the same place as other code and integrate it into DevOps platforms — enabling a unified view of code quality across the entire stack
+**sf-cat** bridges the gap:
 
-## Notes on Column Data
+- Converts Code Analyzer JSON to [SonarQube Generic Issue Data](https://docs.sonarsource.com/sonarqube-cloud/enriching/generic-issue-data/)
+- Drops cleanly into `sonar-scanner` reports
+- Gives you one place to see Salesforce findings with the rest of your codebase
 
-Salesforce Code Analyzer output sometimes contains `startColumn` and `endColumn` values that exceed the actual length of the line in the source file.
+## Quick Start
 
-SonarQube enforces strict bounds on these values and will fail the scan if a column offset exceeds the line length.
+**1. Run Salesforce Code Analyzer** (JSON output):
 
-To prevent such failures, `sf-cat` automatically removes column values (`startColumn`, `endColumn`) from all issues reported by the Salesforce Code Analyzer. This ensures compatibility with SonarQube while preserving line-level highlighting.
-
-## How to Use
-
-### Step 1: Run Salesforce Code Analyzer in JSON format
-
-```
+```bash
 sf code-analyzer run --workspace "./force-app/main/default/" --rule-selector Recommended -f "output.json"
 ```
 
-### Step 2: Convert to SonarQube format
+**2. Convert to SonarQube format:**
 
+```bash
+sf cat transform -i "output.json" -o "results.json"
 ```
-sf cat transform -j "output.json" -r "results.json"
-```
 
-### Step 3: Run SonarQube scan with converted issues
+**3. Run SonarQube** with the converted issues.
 
-In your `sonar-project.properties`:
+In `sonar-project.properties`:
 
-```
+```properties
 sonar.externalIssuesReportPaths=results.json
 ```
 
-Or pass it via CLI:
+Or via CLI:
 
-```
+```bash
 sonar-scanner -Dsonar.externalIssuesReportPaths=results.json
 ```
 
-## Command
+## Command Reference
 
-## `sf cat transform`
+### `sf cat transform`
 
+| Flag            | Short | Description                                                       |
+| --------------- | ----- | ----------------------------------------------------------------- |
+| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)    |
+| `--output-file` | `-o`  | Path for the SonarQube-compatible output (default: `output.json`) |
+
+**Example:**
+
+```bash
+sf cat transform -i "salesforce-code-analyzer.json" -o "sonar.json"
 ```
-USAGE
-  $ sf cat transform -i <value> [-o <value>] [--json]
 
-FLAGS
-  -i, --input-file=<value>             Path to the JSON file created by the Salesforce Code Analyzer plugin.
-  -o, --output-file=<value>            Path to the output created by this plugin.
-                                       [default: "output.json"]
+## Column Data Handling
 
-GLOBAL FLAGS
-  --json  Format output as json.
+Salesforce Code Analyzer sometimes reports `startColumn` and `endColumn` values that exceed the actual line length. SonarQube rejects these and fails the scan.
 
-EXAMPLES
-
-    $ sf cat transform -i "salesforce-code-analyzer.json" -o "sonar.json"
-
-```
+**sf-cat** strips column values from all issues before output. Line-level highlighting is preserved; out-of-bounds column data is removed so scans succeed.
 
 ## Issues
 
-If you encounter any issues or would like to suggest features, please create an [issue](https://github.com/mcarvin8/sf-cat/issues).
+Found a bug or have an idea? [Open an issue](https://github.com/mcarvin8/sf-cat/issues).
 
 ## License
 
-This project is licensed under the MIT license. Please see the [LICENSE](https://raw.githubusercontent.com/mcarvin8/sf-cat/main/LICENSE.md) file for details.
+MIT — see [LICENSE](https://raw.githubusercontent.com/mcarvin8/sf-cat/main/LICENSE.md) for details.
