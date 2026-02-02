@@ -62,14 +62,23 @@ export async function convertToSonarQubeFormat(inputPath: string, outputPath: st
 
   await writeFile(outputPath, JSON.stringify(output, null, 2));
 }
-/*
-Map issue types to the COMMON_TAGS
-https://github.com/forcedotcom/code-analyzer-core/blob/dev/packages/code-analyzer-engine-api/src/rules.ts
-*/
+/**
+ * Maps Salesforce Code Analyzer category tags to SonarQube issue types.
+ * SonarQube only supports: BUG, VULNERABILITY, CODE_SMELL.
+ *
+ * Aligned with COMMON_TAGS.CATEGORIES from code-analyzer-engine-api:
+ * https://github.com/forcedotcom/code-analyzer-core/blob/dev/packages/code-analyzer-engine-api/src/rules.ts
+ */
 function mapIssueType(tags: string[]): 'BUG' | 'VULNERABILITY' | 'CODE_SMELL' {
   const tagSet = new Set(tags.map((tag) => tag.toLowerCase()));
 
-  if (tagSet.has('security')) return 'VULNERABILITY'; // SECURITY → VULNERABILITY
-  if (tagSet.has('errorprone')) return 'BUG'; // ERROR_PRONE → BUG
-  return 'CODE_SMELL'; // Everything else → CODE_SMELL
+  // Security → VULNERABILITY (security vulnerabilities)
+  if (tagSet.has('security')) return 'VULNERABILITY';
+
+  // ErrorProne → BUG (possible runtime errors, unexpected behavior)
+  if (tagSet.has('errorprone')) return 'BUG';
+
+  // BestPractices, CodeStyle, Design, Documentation, Performance → CODE_SMELL
+  // (quality, maintainability, suboptimal code)
+  return 'CODE_SMELL';
 }
