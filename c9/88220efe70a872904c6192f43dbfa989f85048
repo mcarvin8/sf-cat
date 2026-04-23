@@ -1,0 +1,53 @@
+.husky/commit-msg
+  h_b104b674256482 1
+test/commands/cat/transform.nut.ts
+  h_b104b674256482 6
+.github/workflows/release.yml
+  h_b104b674256482 2,7,15,20-21,30,34,37,42,46
+.husky/pre-push
+  h_b104b674256482 1
+package.json
+  h_b104b674256482 14-18,25,69,72,75,78,127-140,158,166-167
+README.md
+  h_b104b674256482 7,13-15,18-19
+.github/workflows/test.yml
+  h_b104b674256482 7,9-10,14-54,57-58,61-100
+vitest.nut.config.ts
+  h_b104b674256482 1-13
+.gitignore
+  h_b104b674256482 12
+test/commands/cat/transform.test.ts
+  h_b104b674256482 7
+  71a1d39172549025 128-175
+tsconfig.json
+  h_b104b674256482 7-13
+vitest.config.ts
+  h_b104b674256482 1-22
+.husky/pre-commit
+  h_b104b674256482 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c988220efe70a872904c6192f43dbfa989f85048",
+  "prompts": {
+    "71a1d39172549025": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6b19af68-dfb4-4f4c-b39c-7f1109e026bd",
+        "model": "auto-high"
+      },
+      "human_author": "Matt Carvin",
+      "messages": [],
+      "total_additions": 48,
+      "total_deletions": 0,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_b104b674256482": {
+      "author": "Matt Carvin"
+    }
+  }
+}
