@@ -88,7 +88,7 @@ sf cat transform -i "salesforce-code-analyzer.json" -o "sonar.json"
 
 Salesforce Code Analyzer sometimes reports `startColumn` and `endColumn` values that exceed the actual line length. SonarQube rejects these and fails the scan.
 
-**sf-cat** strips column values from all issues before output. Line-level highlighting is preserved; out-of-bounds column data is removed so scans succeed.
+**sf-cat** strips column values from all issues before output. Line-level highlighting is preserved; all column data is removed so out-of-bounds column data don't cause SonarQube scans to fail.
 
 ## Issues
 
