@@ -4,19 +4,22 @@
 [![Downloads/week](https://img.shields.io/npm/dw/sf-cat.svg)](https://npmjs.org/package/sf-cat)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/mcarvin8/sf-cat/main/LICENSE.md)
 [![Maintainability](https://qlty.sh/gh/mcarvin8/projects/sf-cat/maintainability.svg)](https://qlty.sh/gh/mcarvin8/projects/sf-cat)
-[![Code Coverage](https://qlty.sh/gh/mcarvin8/projects/sf-cat/coverage.svg)](https://qlty.sh/gh/mcarvin8/projects/sf-cat)
+[![codecov](https://codecov.io/gh/mcarvin8/sf-cat/graph/badge.svg?token=ENF0XXJGEM)](https://codecov.io/gh/mcarvin8/sf-cat)
 
 A Salesforce CLI plugin that converts Salesforce Code Analyzer output into SonarQube's Generic Issue Data format — so you can surface Salesforce code quality results in SonarQube alongside the rest of your stack.
 
 ## Table of Contents
 
-- [Install](#install)
-- [Why sf-cat?](#why-sf-cat)
-- [Quick Start](#quick-start)
-- [Command Reference](#command-reference)
-- [Column Data Handling](#column-data-handling)
-- [Issues](#issues)
-- [License](#license)
+- [sf-cat](#sf-cat)
+  - [Table of Contents](#table-of-contents)
+  - [Install](#install)
+  - [Why sf-cat?](#why-sf-cat)
+  - [Quick Start](#quick-start)
+  - [Command Reference](#command-reference)
+    - [`sf cat transform`](#sf-cat-transform)
+  - [Column Data Handling](#column-data-handling)
+  - [Issues](#issues)
+  - [License](#license)
 
 ## Install
 

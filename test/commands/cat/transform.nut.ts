@@ -3,7 +3,7 @@
 import { readFile, writeFile, unlink } from 'node:fs/promises';
 
 import { execCmd, TestSession } from '@salesforce/cli-plugins-testkit';
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { CodeAnalyzerOutput, SonarQubeIssue, SonarQubeRule } from '../../../src/utils/types.js';
 
 // Sample mock input for testing
