@@ -8,23 +8,19 @@
 
 A Salesforce CLI plugin that converts Salesforce Code Analyzer output into SonarQube's Generic Issue Data format — so you can surface Salesforce code quality results in SonarQube alongside the rest of your stack.
 
-## Table of Contents
-
-- [sf-cat](#sf-cat)
-  - [Table of Contents](#table-of-contents)
-  - [Install](#install)
-  - [Why sf-cat?](#why-sf-cat)
-  - [Quick Start](#quick-start)
-  - [Command Reference](#command-reference)
-    - [`sf cat transform`](#sf-cat-transform)
-  - [Column Data Handling](#column-data-handling)
-  - [Issues](#issues)
-  - [License](#license)
+- [Install](#install)
+- [Why sf-cat?](#why-sf-cat)
+- [Quick Start](#quick-start)
+- [Command Reference](#command-reference)
+  - [`sf cat transform`](#sf-cat-transform)
+- [Column Data Handling](#column-data-handling)
+- [Issues](#issues)
+- [License](#license)
 
 ## Install
 
 ```bash
-sf plugins install sf-cat@x.y.z
+sf plugins install sf-cat@latest
 ```
 
 ## Why sf-cat?
@@ -92,8 +88,8 @@ Salesforce Code Analyzer sometimes reports `startColumn` and `endColumn` values 
 
 ## Issues
 
-Found a bug or have an idea? [Open an issue](https://github.com/mcarvin8/sf-cat/issues).
+Found a bug or have an idea? Open an [issue](https://github.com/mcarvin8/sf-cat/issues).
 
 ## License
 
-MIT — see [LICENSE](https://raw.githubusercontent.com/mcarvin8/sf-cat/main/LICENSE.md) for details.
+[MIT](https://raw.githubusercontent.com/mcarvin8/sf-cat/main/LICENSE.md)
