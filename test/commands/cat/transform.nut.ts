@@ -131,4 +131,15 @@ describe('sf cat transform non-unit tests', () => {
     expect(xml).toContain('classname="force-app/main/default/classes/OldApi.cls"');
     expect(xml).toContain('name="AvoidOldSalesforceApiVersions:1"');
   });
+
+  it('should emit GitHub Actions workflow commands to stdout', () => {
+    const command = `cat transform -i "${tempInputPath}" -f github`;
+
+    const result = execCmd(command, { ensureExitCode: 0 });
+    const stdout = result.shellOutput.stdout;
+
+    expect(stdout).toContain(
+      '::error file=force-app/main/default/classes/OldApi.cls,line=1,endLine=1,title=AvoidOldSalesforceApiVersions::Avoid using a Salesforce API version that is more than 3 years old.',
+    );
+  });
 });

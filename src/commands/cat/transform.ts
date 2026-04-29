@@ -4,7 +4,13 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
 import { CodeAnalyzerOutput, TransformResult } from '../../utils/types.js';
-import { OUTPUT_FORMATS, OutputFormat, defaultOutputFiles, formatters } from '../../utils/formats/index.js';
+import {
+  OUTPUT_FORMATS,
+  OutputFormat,
+  STDOUT_SENTINEL,
+  defaultOutputFiles,
+  formatters,
+} from '../../utils/formats/index.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-cat', 'transformer.transform');
@@ -41,9 +47,13 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
     const raw = await readFile(flags['input-file'], 'utf8');
     const input = JSON.parse(raw) as CodeAnalyzerOutput;
     const handler = formatters[format];
-    const report = handler.convert(input);
+    const serialized = handler.serialize(handler.convert(input));
 
-    await writeFile(outputPath, handler.serialize(report));
+    if (outputPath === STDOUT_SENTINEL) {
+      process.stdout.write(serialized);
+    } else {
+      await writeFile(outputPath, serialized);
+    }
     return { path: outputPath };
   }
 }
