@@ -4,9 +4,10 @@ import { readFile, writeFile, unlink } from 'node:fs/promises';
 
 import { execCmd, TestSession } from '@salesforce/cli-plugins-testkit';
 import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
-import { CodeAnalyzerOutput, SonarQubeIssue, SonarQubeRule } from '../../../src/utils/types.js';
+import type { Log } from 'sarif';
+import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
+import { SonarQubeReport } from '../../../src/utils/formats/sonar.js';
 
-// Sample mock input for testing
 const mockAnalyzerInput: CodeAnalyzerOutput = {
   violations: [
     {
@@ -27,21 +28,22 @@ const mockAnalyzerInput: CodeAnalyzerOutput = {
   ],
 };
 
-describe('convertToSonarQubeFormat non-unit tests', () => {
+describe('sf cat transform non-unit tests', () => {
   let session: TestSession;
   let tempInputPath: string;
   let tempOutputPath: string;
 
   beforeEach(async () => {
     tempInputPath = 'test-analyzer-input.json';
-    tempOutputPath = 'test-sonarqube-output.json';
+    tempOutputPath = 'test-output';
     await writeFile(tempInputPath, JSON.stringify(mockAnalyzerInput, null, 2));
   });
 
   afterEach(async () => {
     await Promise.all([
       unlink(tempInputPath),
-      unlink(tempOutputPath).catch(() => {}), // tolerate missing file if test failed early
+      unlink(`${tempOutputPath}.json`).catch(() => {}),
+      unlink(`${tempOutputPath}.sarif`).catch(() => {}),
     ]);
   });
 
@@ -54,15 +56,12 @@ describe('convertToSonarQubeFormat non-unit tests', () => {
   });
 
   it('should convert Salesforce Code Analyzer output into SonarQube format', async () => {
-    const command = `cat transform -i "${tempInputPath}" -o "${tempOutputPath}"`;
+    const outputPath = `${tempOutputPath}.json`;
+    const command = `cat transform -i "${tempInputPath}" -o "${outputPath}"`;
 
     execCmd(command, { ensureExitCode: 0 });
 
-    const outputRaw = await readFile(tempOutputPath, 'utf8');
-    const output = JSON.parse(outputRaw) as {
-      rules: SonarQubeRule[];
-      issues: SonarQubeIssue[];
-    };
+    const output = JSON.parse(await readFile(outputPath, 'utf8')) as SonarQubeReport;
 
     expect(output.rules).toHaveLength(1);
     expect(output.issues).toHaveLength(1);
@@ -79,5 +78,20 @@ describe('convertToSonarQubeFormat non-unit tests', () => {
       startLine: 1,
       endLine: 1,
     });
+  });
+
+  it('should convert Salesforce Code Analyzer output into SARIF format', async () => {
+    const outputPath = `${tempOutputPath}.sarif`;
+    const command = `cat transform -i "${tempInputPath}" -f sarif -o "${outputPath}"`;
+
+    execCmd(command, { ensureExitCode: 0 });
+
+    const log = JSON.parse(await readFile(outputPath, 'utf8')) as Log;
+
+    expect(log.version).toBe('2.1.0');
+    expect(log.runs).toHaveLength(1);
+    expect(log.runs[0].tool.driver.name).toBe('Salesforce Code Analyzer (regex)');
+    expect(log.runs[0].results).toHaveLength(1);
+    expect(log.runs[0].results?.[0].level).toBe('error');
   });
 });

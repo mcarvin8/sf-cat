@@ -1,9 +1,10 @@
 'use strict';
 
+import { readFile, writeFile } from 'node:fs/promises';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
-import { convertToSonarQubeFormat } from '../../utils/transformToSonar.js';
-import { TransformResult } from '../../utils/types.js';
+import { CodeAnalyzerOutput, TransformResult } from '../../utils/types.js';
+import { OUTPUT_FORMATS, OutputFormat, defaultOutputFiles, formatters } from '../../utils/formats/index.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-cat', 'transformer.transform');
@@ -23,14 +24,25 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
       summary: messages.getMessage('flags.output-file.summary'),
       // eslint-disable-next-line sf-plugin/dash-o
       char: 'o',
-      required: true,
-      default: 'output.json',
     }),
+    format: Flags.option({
+      summary: messages.getMessage('flags.format.summary'),
+      char: 'f',
+      options: OUTPUT_FORMATS,
+      default: 'sonar' as OutputFormat,
+    })(),
   };
 
   public async run(): Promise<TransformResult> {
     const { flags } = await this.parse(TransformerTransform);
-    await convertToSonarQubeFormat(flags['input-file'], flags['output-file']);
-    return { path: flags['output-file'] };
+    const format = flags.format;
+    const outputPath = flags['output-file'] ?? defaultOutputFiles[format];
+
+    const raw = await readFile(flags['input-file'], 'utf8');
+    const input = JSON.parse(raw) as CodeAnalyzerOutput;
+    const report = formatters[format](input);
+
+    await writeFile(outputPath, JSON.stringify(report, null, 2));
+    return { path: outputPath };
   }
 }
