@@ -192,11 +192,14 @@ Severity → annotation level: `Critical` / `High` → `error`, `Moderate` → `
 
 ### `sf cat transform`
 
-| Flag            | Short | Description                                                                                                      |
-| --------------- | ----- | ---------------------------------------------------------------------------------------------------------------- |
-| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                                   |
-| `--format`      | `-f`  | Output format: `sonar` (default), `sarif`, `codeclimate`, `junit`, or `github`                                   |
-| `--output-file` | `-o`  | Path for the converted output. Defaults to a per-format filename; `github` writes to stdout when `-o` is omitted |
+| Flag                 | Short | Description                                                                                                                       |
+| -------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `--input-file`       | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                                                    |
+| `--format`           | `-f`  | Output format: `sonar` (default), `sarif`, `codeclimate`, `junit`, or `github`                                                    |
+| `--output-file`      | `-o`  | Path for the converted output. Defaults to a per-format filename; `github` writes to stdout when `-o` is omitted                  |
+| `--fail-on`          |       | Exit non-zero when any violation has this severity or higher: `critical`, `high`, `moderate`, `low`, `info`, or `never` (default) |
+| `--strip-prefix`     |       | Strip a leading prefix (e.g. `/home/runner/work/repo/repo/`) from every violation file path before formatting                     |
+| `--project-relative` |       | Make every violation file path relative to the Salesforce DX project root (the directory containing `sfdx-project.json`)          |
 
 **Examples:**
 
@@ -207,7 +210,36 @@ sf cat transform -i "salesforce-code-analyzer.json" -f sarif -o "results.sarif"
 sf cat transform -i "salesforce-code-analyzer.json" -f codeclimate
 sf cat transform -i "salesforce-code-analyzer.json" -f junit
 sf cat transform -i "salesforce-code-analyzer.json" -f github
+sf cat transform -i "salesforce-code-analyzer.json" --fail-on high
+sf cat transform -i "salesforce-code-analyzer.json" --project-relative
 ```
+
+## Failing the Build on High-Severity Findings
+
+`--fail-on <severity>` makes `sf cat transform` itself act as the CI gate. The output file is written first (so artifact uploads in later steps still see it), then the process exits with code `1` if any violation meets or exceeds the threshold:
+
+```bash
+# Convert to SARIF and fail the job if any High or Critical violations exist
+sf cat transform -i analyzer.json -f sarif -o results.sarif --fail-on high
+```
+
+Severity ranking (highest first): `critical` > `high` > `moderate` > `low` > `info`. The default is `never` (no failure).
+
+## Path Normalization
+
+Code Analyzer sometimes emits absolute file paths from CI runners (e.g. `/home/runner/work/myrepo/myrepo/force-app/main/default/classes/X.cls`). Most external tools — GitHub Code Scanning anchors, CodeClimate fingerprints, JUnit `classname` attributes — expect repo-relative paths and will silently fail to attach annotations or generate inconsistent fingerprints across runs when given absolute paths.
+
+Two flags fix this for **every output format simultaneously**:
+
+```bash
+# Strip a literal prefix
+sf cat transform -i analyzer.json -f sarif --strip-prefix "/home/runner/work/myrepo/myrepo/"
+
+# Or auto-detect the SFDX project root
+sf cat transform -i analyzer.json -f sarif --project-relative
+```
+
+`--project-relative` walks upward from the current directory looking for an `sfdx-project.json` file and strips that directory from every path. The two flags are mutually exclusive; pick whichever matches your CI environment.
 
 ## Column Data Handling
 

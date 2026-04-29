@@ -11,6 +11,8 @@ import {
   defaultOutputFiles,
   formatters,
 } from '../../utils/formats/index.js';
+import { FAIL_ON_THRESHOLDS, FailOnThreshold, countAtOrAboveThreshold } from '../../utils/severity.js';
+import { normalizePaths } from '../../utils/normalizePaths.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-cat', 'transformer.transform');
@@ -37,6 +39,20 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
       options: OUTPUT_FORMATS,
       default: 'sonar' as OutputFormat,
     })(),
+    'fail-on': Flags.option({
+      summary: messages.getMessage('flags.fail-on.summary'),
+      options: FAIL_ON_THRESHOLDS,
+      default: 'never' as FailOnThreshold,
+    })(),
+    'strip-prefix': Flags.string({
+      summary: messages.getMessage('flags.strip-prefix.summary'),
+      exclusive: ['project-relative'],
+    }),
+    'project-relative': Flags.boolean({
+      summary: messages.getMessage('flags.project-relative.summary'),
+      exclusive: ['strip-prefix'],
+      default: false,
+    }),
   };
 
   public async run(): Promise<TransformResult> {
@@ -45,7 +61,13 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
     const outputPath = flags['output-file'] ?? defaultOutputFiles[format];
 
     const raw = await readFile(flags['input-file'], 'utf8');
-    const input = JSON.parse(raw) as CodeAnalyzerOutput;
+    const parsed = JSON.parse(raw) as CodeAnalyzerOutput;
+
+    const input = normalizePaths(parsed, {
+      stripPrefix: flags['strip-prefix'],
+      projectRelative: flags['project-relative'],
+    });
+
     const handler = formatters[format];
     const serialized = handler.serialize(handler.convert(input));
 
@@ -54,6 +76,19 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
     } else {
       await writeFile(outputPath, serialized);
     }
-    return { path: outputPath };
+
+    const failures = countAtOrAboveThreshold(input.violations, flags['fail-on']);
+    if (failures > 0) {
+      process.exitCode = 1;
+      this.warn(
+        `Found ${failures} violation${failures === 1 ? '' : 's'} at severity '${flags['fail-on']}' or higher; exiting with code 1.`,
+      );
+    }
+
+    return {
+      path: outputPath,
+      violations: input.violations.length,
+      failures,
+    };
   }
 }

@@ -3,7 +3,7 @@
 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readFile, writeFile, unlink } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rm, unlink, writeFile } from 'node:fs/promises';
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Log } from 'sarif';
@@ -12,6 +12,8 @@ import { convertToSarif } from '../../../src/utils/formats/sarif.js';
 import { convertToCodeClimate } from '../../../src/utils/formats/codeclimate.js';
 import { convertToJUnit, serializeJUnit } from '../../../src/utils/formats/junit.js';
 import { convertToGitHubAnnotations, serializeGitHubAnnotations } from '../../../src/utils/formats/github.js';
+import { countAtOrAboveThreshold } from '../../../src/utils/severity.js';
+import { normalizePaths } from '../../../src/utils/normalizePaths.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 
 const mockAnalyzerInput: CodeAnalyzerOutput = {
@@ -802,5 +804,220 @@ describe('serializeGitHubAnnotations unit tests', () => {
     expect(lines).toHaveLength(2);
     expect(lines[0].startsWith('::error ')).toBe(true);
     expect(lines[1].startsWith('::notice ')).toBe(true);
+  });
+});
+
+describe('countAtOrAboveThreshold unit tests', () => {
+  const fiveSeverities: CodeAnalyzerOutput = {
+    violations: [1, 2, 3, 4, 5].map((sev, i) => ({
+      rule: `R${sev}`,
+      engine: 'pmd',
+      severity: sev,
+      tags: ['security'],
+      primaryLocationIndex: 0,
+      message: 'msg',
+      locations: [{ file: 'a.cls', startLine: i + 1 }],
+    })),
+  };
+
+  it('should return 0 for the "never" threshold regardless of input', () => {
+    expect(countAtOrAboveThreshold(fiveSeverities.violations, 'never')).toBe(0);
+    expect(countAtOrAboveThreshold([], 'never')).toBe(0);
+  });
+
+  it('should count only violations at or above the requested threshold', () => {
+    expect(countAtOrAboveThreshold(fiveSeverities.violations, 'critical')).toBe(1);
+    expect(countAtOrAboveThreshold(fiveSeverities.violations, 'high')).toBe(2);
+    expect(countAtOrAboveThreshold(fiveSeverities.violations, 'moderate')).toBe(3);
+    expect(countAtOrAboveThreshold(fiveSeverities.violations, 'low')).toBe(4);
+    expect(countAtOrAboveThreshold(fiveSeverities.violations, 'info')).toBe(5);
+  });
+
+  it('should treat unknown analyzer severities as "moderate"', () => {
+    const violations = [{ severity: 999 }, { severity: 1 }];
+    // 999 normalizes to 'moderate'; 1 is 'critical'
+    expect(countAtOrAboveThreshold(violations, 'critical')).toBe(1);
+    expect(countAtOrAboveThreshold(violations, 'high')).toBe(1);
+    expect(countAtOrAboveThreshold(violations, 'moderate')).toBe(2);
+  });
+
+  it('should return 0 for empty violations regardless of threshold', () => {
+    expect(countAtOrAboveThreshold([], 'critical')).toBe(0);
+    expect(countAtOrAboveThreshold([], 'info')).toBe(0);
+  });
+});
+
+describe('normalizePaths unit tests', () => {
+  const buildInput = (file: string): CodeAnalyzerOutput => ({
+    violations: [
+      {
+        rule: 'R',
+        engine: 'pmd',
+        severity: 2,
+        tags: ['security'],
+        primaryLocationIndex: 0,
+        message: 'msg',
+        locations: [{ file, startLine: 1 }],
+      },
+    ],
+  });
+
+  it('should return the input unchanged when no options are set', () => {
+    const input = buildInput('/abs/path/file.cls');
+    expect(normalizePaths(input, {})).toBe(input);
+  });
+
+  it('should strip a literal prefix from each path', () => {
+    const input = buildInput('/home/runner/work/repo/repo/force-app/main/default/X.cls');
+    const out = normalizePaths(input, { stripPrefix: '/home/runner/work/repo/repo/' });
+    expect(out.violations[0].locations[0].file).toBe('force-app/main/default/X.cls');
+  });
+
+  it('should normalize backslashes in both prefix and path before comparing', () => {
+    const input = buildInput('C:\\Users\\me\\repo\\src\\X.cls');
+    const out = normalizePaths(input, { stripPrefix: 'C:\\Users\\me\\repo' });
+    expect(out.violations[0].locations[0].file).toBe('src/X.cls');
+  });
+
+  it('should accept a prefix with or without a trailing slash', () => {
+    const a = normalizePaths(buildInput('/repo/src/X.cls'), { stripPrefix: '/repo' });
+    const b = normalizePaths(buildInput('/repo/src/X.cls'), { stripPrefix: '/repo/' });
+    expect(a.violations[0].locations[0].file).toBe('src/X.cls');
+    expect(b.violations[0].locations[0].file).toBe('src/X.cls');
+  });
+
+  it('should leave paths unchanged when the prefix does not match', () => {
+    const input = buildInput('/different/path/X.cls');
+    const out = normalizePaths(input, { stripPrefix: '/repo/' });
+    expect(out.violations[0].locations[0].file).toBe('/different/path/X.cls');
+  });
+
+  it('should NOT strip a prefix that is only a partial path component match', () => {
+    // '/repo' should NOT match the start of '/reports/X.cls'
+    const input = buildInput('/reports/X.cls');
+    const out = normalizePaths(input, { stripPrefix: '/repo' });
+    expect(out.violations[0].locations[0].file).toBe('/reports/X.cls');
+  });
+
+  it('should reduce the path to "" when it equals the prefix exactly', () => {
+    const input = buildInput('/repo');
+    const out = normalizePaths(input, { stripPrefix: '/repo' });
+    expect(out.violations[0].locations[0].file).toBe('');
+  });
+
+  it('should handle multi-violation, multi-location inputs', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R1',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [
+            { file: '/repo/a.cls', startLine: 1 },
+            { file: '/repo/b.cls', startLine: 2 },
+          ],
+        },
+        {
+          rule: 'R2',
+          engine: 'pmd',
+          severity: 3,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [{ file: '/repo/c.cls', startLine: 3 }],
+        },
+      ],
+    };
+    const out = normalizePaths(input, { stripPrefix: '/repo' });
+    expect(out.violations[0].locations.map((l) => l.file)).toEqual(['a.cls', 'b.cls']);
+    expect(out.violations[1].locations[0].file).toBe('c.cls');
+  });
+
+  it('should not mutate the original input', () => {
+    const input = buildInput('/repo/X.cls');
+    const originalFile = input.violations[0].locations[0].file;
+    normalizePaths(input, { stripPrefix: '/repo/' });
+    expect(input.violations[0].locations[0].file).toBe(originalFile);
+  });
+
+  it('should ignore an empty stripPrefix', () => {
+    const input = buildInput('/repo/X.cls');
+    const out = normalizePaths(input, { stripPrefix: '' });
+    expect(out).toBe(input);
+  });
+
+  it('should ignore a stripPrefix that becomes empty after slash trimming', () => {
+    const input = buildInput('/repo/X.cls');
+    const out = normalizePaths(input, { stripPrefix: '/' });
+    expect(out).toBe(input);
+  });
+});
+
+describe('normalizePaths --project-relative integration', () => {
+  let tempDir: string;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    // Use realpath so the temp dir matches what process.cwd() reports on
+    // macOS, where /var/folders/... is a symlink to /private/var/folders/...
+    tempDir = await realpath(await mkdtemp(join(tmpdir(), 'sf-cat-proj-')));
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it('should resolve the SFDX project root from sfdx-project.json and strip it', async () => {
+    const projectDir = join(tempDir, 'my-sfdx-project');
+    const subDir = join(projectDir, 'force-app', 'main', 'default');
+    await mkdir(subDir, { recursive: true });
+    await writeFile(join(projectDir, 'sfdx-project.json'), '{"packageDirectories":[]}');
+
+    process.chdir(subDir);
+
+    const projectDirNormalized = projectDir.replace(/\\/g, '/');
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [{ file: `${projectDirNormalized}/force-app/main/default/X.cls`, startLine: 1 }],
+        },
+      ],
+    };
+
+    const out = normalizePaths(input, { projectRelative: true });
+    expect(out.violations[0].locations[0].file).toBe('force-app/main/default/X.cls');
+  });
+
+  it('should throw a helpful error when no sfdx-project.json is found above cwd', () => {
+    process.chdir(tempDir);
+    expect(() =>
+      normalizePaths(
+        {
+          violations: [
+            {
+              rule: 'R',
+              engine: 'pmd',
+              severity: 2,
+              tags: [],
+              primaryLocationIndex: 0,
+              message: 'm',
+              locations: [{ file: '/x.cls', startLine: 1 }],
+            },
+          ],
+        },
+        { projectRelative: true },
+      ),
+    ).toThrow(/sfdx-project\.json/);
   });
 });
