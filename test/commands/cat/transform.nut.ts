@@ -47,6 +47,7 @@ describe('sf cat transform non-unit tests', () => {
       unlink(`${tempOutputPath}.json`).catch(() => {}),
       unlink(`${tempOutputPath}.sarif`).catch(() => {}),
       unlink(`${tempOutputPath}-cc.json`).catch(() => {}),
+      unlink(`${tempOutputPath}.xml`).catch(() => {}),
     ]);
   });
 
@@ -114,5 +115,20 @@ describe('sf cat transform non-unit tests', () => {
       severity: 'critical',
     });
     expect(issues[0].fingerprint).toMatch(/^[a-f0-9]{32}$/);
+  });
+
+  it('should convert Salesforce Code Analyzer output into JUnit XML', async () => {
+    const outputPath = `${tempOutputPath}.xml`;
+    const command = `cat transform -i "${tempInputPath}" -f junit -o "${outputPath}"`;
+
+    execCmd(command, { ensureExitCode: 0 });
+
+    const xml = await readFile(outputPath, 'utf8');
+
+    expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+    expect(xml).toContain('<testsuites name="Salesforce Code Analyzer" tests="1" failures="1">');
+    expect(xml).toContain('<testsuite name="regex" tests="1" failures="1">');
+    expect(xml).toContain('classname="force-app/main/default/classes/OldApi.cls"');
+    expect(xml).toContain('name="AvoidOldSalesforceApiVersions:1"');
   });
 });

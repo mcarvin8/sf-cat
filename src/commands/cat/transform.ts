@@ -40,9 +40,10 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
 
     const raw = await readFile(flags['input-file'], 'utf8');
     const input = JSON.parse(raw) as CodeAnalyzerOutput;
-    const report = formatters[format](input);
+    const handler = formatters[format];
+    const report = handler.convert(input);
 
-    await writeFile(outputPath, JSON.stringify(report, null, 2));
+    await writeFile(outputPath, handler.serialize(report));
     return { path: outputPath };
   }
 }
