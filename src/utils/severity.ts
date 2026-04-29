@@ -26,6 +26,53 @@ export const sarifLevel: Record<NormalizedSeverity, 'error' | 'warning' | 'note'
   info: 'note',
 };
 
+export type CodeClimateSeverity = 'info' | 'minor' | 'major' | 'critical' | 'blocker';
+
+export const codeClimateSeverity: Record<NormalizedSeverity, CodeClimateSeverity> = {
+  critical: 'blocker',
+  high: 'critical',
+  moderate: 'major',
+  low: 'minor',
+  info: 'info',
+};
+
+export type CodeClimateCategory =
+  | 'Bug Risk'
+  | 'Clarity'
+  | 'Compatibility'
+  | 'Complexity'
+  | 'Duplication'
+  | 'Performance'
+  | 'Security'
+  | 'Style';
+
+const TAG_TO_CATEGORY: Record<string, CodeClimateCategory> = {
+  security: 'Security',
+  errorprone: 'Bug Risk',
+  reliability: 'Bug Risk',
+  performance: 'Performance',
+  design: 'Complexity',
+  documentation: 'Clarity',
+  portability: 'Compatibility',
+  bestpractices: 'Style',
+  codestyle: 'Style',
+  maintainability: 'Style',
+};
+
+/**
+ * Maps Code Analyzer tags to the fixed CodeClimate category set. Returns at
+ * least one category — falls back to "Style" when no tags match.
+ */
+export function mapCodeClimateCategories(tags: string[]): CodeClimateCategory[] {
+  const out = new Set<CodeClimateCategory>();
+  for (const tag of tags) {
+    const cat = TAG_TO_CATEGORY[tag.toLowerCase()];
+    if (cat) out.add(cat);
+  }
+  if (out.size === 0) out.add('Style');
+  return Array.from(out);
+}
+
 export function normalizeSeverity(severity: number): NormalizedSeverity {
   return severityFromAnalyzer[severity] ?? 'moderate';
 }
