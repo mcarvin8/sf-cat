@@ -69,6 +69,31 @@ const TAG_TO_CATEGORY: Record<string, CodeClimateCategory> = {
   maintainability: 'Style',
 };
 
+export const FAIL_ON_THRESHOLDS = ['critical', 'high', 'moderate', 'low', 'info', 'never'] as const;
+export type FailOnThreshold = (typeof FAIL_ON_THRESHOLDS)[number];
+
+const SEVERITY_RANK: Record<NormalizedSeverity, number> = {
+  critical: 1,
+  high: 2,
+  moderate: 3,
+  low: 4,
+  info: 5,
+};
+
+/**
+ * Counts violations whose normalized severity is at or higher than `threshold`.
+ * Returns 0 when threshold === 'never'. Lower rank number = higher severity, so
+ * "at or higher" means rank <= threshold rank.
+ */
+export function countAtOrAboveThreshold(
+  violations: ReadonlyArray<{ severity: number }>,
+  threshold: FailOnThreshold,
+): number {
+  if (threshold === 'never') return 0;
+  const limit = SEVERITY_RANK[threshold];
+  return violations.filter((v) => SEVERITY_RANK[normalizeSeverity(v.severity)] <= limit).length;
+}
+
 /**
  * Maps Code Analyzer tags to the fixed CodeClimate category set. Returns at
  * least one category — falls back to "Style" when no tags match.

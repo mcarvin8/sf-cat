@@ -14,6 +14,8 @@ Transform Salesforce Code Analyzer results into a code quality format consumable
 - `sf cat transform -i "sf-code-analyzer.json" -f junit`
 - `sf cat transform -i "sf-code-analyzer.json" -f github`
 - `sf cat transform -i "sf-code-analyzer.json" -f sarif -o "results.sarif"`
+- `sf cat transform -i "sf-code-analyzer.json" --fail-on high`
+- `sf cat transform -i "sf-code-analyzer.json" --project-relative`
 
 # flags.input-file.summary
 
@@ -26,3 +28,15 @@ Path to the output created by this plugin. Defaults to `output.json` for `sonar`
 # flags.format.summary
 
 Output format to produce. One of: `sonar` (SonarQube generic issue data), `sarif` (SARIF v2.1.0), `codeclimate` (CodeClimate / GitLab Code Quality), `junit` (JUnit XML), or `github` (GitHub Actions workflow commands).
+
+# flags.fail-on.summary
+
+Exit with code 1 when any violation has the given severity or higher. One of `critical`, `high`, `moderate`, `low`, `info`, or `never` (default). The output file is still written before the failing exit, so CI artifact uploads in later steps still see it.
+
+# flags.strip-prefix.summary
+
+Strip a leading prefix from every violation file path before formatting (for example, `/home/runner/work/repo/repo/`). Useful when CI runners produce absolute paths that break GitHub Code Scanning anchors or CodeClimate fingerprints. Mutually exclusive with `--project-relative`.
+
+# flags.project-relative.summary
+
+Make every violation file path relative to the Salesforce DX project root (resolved by walking upward from the current directory until an `sfdx-project.json` is found). Mutually exclusive with `--strip-prefix`.

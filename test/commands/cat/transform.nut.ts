@@ -142,4 +142,55 @@ describe('sf cat transform non-unit tests', () => {
       '::error file=force-app/main/default/classes/OldApi.cls,line=1,endLine=1,title=AvoidOldSalesforceApiVersions::Avoid using a Salesforce API version that is more than 3 years old.',
     );
   });
+
+  it('should strip a leading prefix from violation paths via --strip-prefix', async () => {
+    const absoluteInput: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: ['security'],
+          primaryLocationIndex: 0,
+          message: 'msg',
+          locations: [
+            {
+              file: '/home/runner/work/myrepo/myrepo/force-app/main/default/classes/X.cls',
+              startLine: 1,
+              endLine: 1,
+            },
+          ],
+        },
+      ],
+    };
+    await writeFile(tempInputPath, JSON.stringify(absoluteInput, null, 2));
+
+    const outputPath = `${tempOutputPath}.json`;
+    const command = `cat transform -i "${tempInputPath}" -o "${outputPath}" --strip-prefix "/home/runner/work/myrepo/myrepo/"`;
+
+    execCmd(command, { ensureExitCode: 0 });
+
+    const output = JSON.parse(await readFile(outputPath, 'utf8')) as SonarQubeReport;
+    expect(output.issues[0].primaryLocation.filePath).toBe('force-app/main/default/classes/X.cls');
+  });
+
+  it('should exit non-zero when --fail-on is met', async () => {
+    const outputPath = `${tempOutputPath}.json`;
+    const command = `cat transform -i "${tempInputPath}" -o "${outputPath}" --fail-on high`;
+
+    // mockAnalyzerInput has severity 2 ('high'), so this should trip the gate
+    execCmd(command, { ensureExitCode: 1 });
+
+    // The file is still written before the failing exit
+    const output = JSON.parse(await readFile(outputPath, 'utf8')) as SonarQubeReport;
+    expect(output.issues).toHaveLength(1);
+  });
+
+  it('should exit zero when --fail-on is set above the highest violation severity', () => {
+    const outputPath = `${tempOutputPath}.json`;
+    const command = `cat transform -i "${tempInputPath}" -o "${outputPath}" --fail-on critical`;
+
+    // mockAnalyzerInput violations are 'high', not 'critical'
+    execCmd(command, { ensureExitCode: 0 });
+  });
 });

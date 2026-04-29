@@ -22,4 +22,6 @@ export type CodeAnalyzerOutput = {
 
 export type TransformResult = {
   path: string;
+  violations: number;
+  failures: number;
 };
