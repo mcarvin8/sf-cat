@@ -3,7 +3,7 @@
 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { mkdir, mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rm, unlink, writeFile } from 'node:fs/promises';
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Log } from 'sarif';
@@ -962,7 +962,9 @@ describe('normalizePaths --project-relative integration', () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(join(tmpdir(), 'sf-cat-proj-'));
+    // Use realpath so the temp dir matches what process.cwd() reports on
+    // macOS, where /var/folders/... is a symlink to /private/var/folders/...
+    tempDir = await realpath(await mkdtemp(join(tmpdir(), 'sf-cat-proj-')));
   });
 
   afterEach(async () => {
