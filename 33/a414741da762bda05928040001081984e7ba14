@@ -1,0 +1,43 @@
+src/commands/cat/transform.ts
+  1f7e10400e197295 43-44,46
+README.md
+  1f7e10400e197295 17,43,120-165,170-174,183
+package.json
+  1f7e10400e197295 3,8-9,52
+test/commands/cat/transform.test.ts
+  1f7e10400e197295 13,469-616
+src/utils/formats/junit.ts
+  h_b104b674256482 1
+  1f7e10400e197295 2-127
+src/utils/formats/index.ts
+  1f7e10400e197295 5,7,10-24,31,38
+test/commands/cat/transform.nut.ts
+  1f7e10400e197295 50,119-133
+messages/transformer.transform.md
+  1f7e10400e197295 3,7,14,23,27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "33a414741da762bda05928040001081984e7ba14",
+  "prompts": {
+    "1f7e10400e197295": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "386b7893-ccd5-4322-9a9e-e145fc431e23",
+        "model": "auto-high"
+      },
+      "human_author": "Matt Carvin",
+      "messages": [],
+      "total_additions": 405,
+      "total_deletions": 47,
+      "accepted_lines": 372,
+      "overriden_lines": 1
+    }
+  },
+  "humans": {
+    "h_b104b674256482": {
+      "author": "Matt Carvin"
+    }
+  }
+}
