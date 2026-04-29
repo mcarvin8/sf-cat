@@ -1,3 +1,4 @@
+/* eslint-disable camelcase -- CodeClimate spec uses snake_case keys. */
 'use strict';
 
 import { readFile, writeFile, unlink } from 'node:fs/promises';
@@ -7,6 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from
 import type { Log } from 'sarif';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 import { SonarQubeReport } from '../../../src/utils/formats/sonar.js';
+import { CodeClimateReport } from '../../../src/utils/formats/codeclimate.js';
 
 const mockAnalyzerInput: CodeAnalyzerOutput = {
   violations: [
@@ -44,6 +46,7 @@ describe('sf cat transform non-unit tests', () => {
       unlink(tempInputPath),
       unlink(`${tempOutputPath}.json`).catch(() => {}),
       unlink(`${tempOutputPath}.sarif`).catch(() => {}),
+      unlink(`${tempOutputPath}-cc.json`).catch(() => {}),
     ]);
   });
 
@@ -93,5 +96,23 @@ describe('sf cat transform non-unit tests', () => {
     expect(log.runs[0].tool.driver.name).toBe('Salesforce Code Analyzer (regex)');
     expect(log.runs[0].results).toHaveLength(1);
     expect(log.runs[0].results?.[0].level).toBe('error');
+  });
+
+  it('should convert Salesforce Code Analyzer output into CodeClimate format', async () => {
+    const outputPath = `${tempOutputPath}-cc.json`;
+    const command = `cat transform -i "${tempInputPath}" -f codeclimate -o "${outputPath}"`;
+
+    execCmd(command, { ensureExitCode: 0 });
+
+    const issues = JSON.parse(await readFile(outputPath, 'utf8')) as CodeClimateReport;
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({
+      type: 'issue',
+      check_name: 'AvoidOldSalesforceApiVersions',
+      engine_name: 'regex',
+      severity: 'critical',
+    });
+    expect(issues[0].fingerprint).toMatch(/^[a-f0-9]{32}$/);
   });
 });

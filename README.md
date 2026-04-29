@@ -13,6 +13,7 @@ A Salesforce CLI plugin that converts Salesforce Code Analyzer output into forma
 - [Quick Start](#quick-start)
   - [SonarQube](#sonarqube)
   - [SARIF (GitHub Code Scanning, Azure DevOps, GitLab, ...)](#sarif-github-code-scanning-azure-devops-gitlab-)
+  - [CodeClimate / GitLab Code Quality](#codeclimate--gitlab-code-quality)
 - [Command Reference](#command-reference)
   - [`sf cat transform`](#sf-cat-transform)
 - [Column Data Handling](#column-data-handling)
@@ -37,6 +38,7 @@ The problem: Code Analyzer output isn't compatible with any of them out of the b
 
 - [SonarQube Generic Issue Data](https://docs.sonarsource.com/sonarqube-cloud/enriching/generic-issue-data/)
 - [SARIF v2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) (GitHub Code Scanning, Azure DevOps, GitLab, Qodana, and any SARIF-aware tool)
+- [CodeClimate JSON](https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md#data-types) (GitLab [Code Quality](https://docs.gitlab.com/ee/ci/testing/code_quality.html), CodeClimate engines)
 
 ## Quick Start
 
@@ -89,15 +91,39 @@ Each Code Analyzer engine (PMD, ESLint, RetireJS, SFGE, regex, ...) is emitted a
 
 The same file can be consumed by Azure DevOps' SARIF extension, GitLab's `sast` artifact (via conversion), Qodana, and any other SARIF v2.1.0–compatible tool.
 
+### CodeClimate / GitLab Code Quality
+
+**1. Convert to CodeClimate JSON:**
+
+```bash
+sf cat transform -i "output.json" -f codeclimate
+```
+
+The default output path is `gl-code-quality-report.json`, the conventional filename for GitLab Code Quality reports. Each issue includes a stable `fingerprint` so GitLab can dedupe across pipeline runs.
+
+**2. Publish from `.gitlab-ci.yml`:**
+
+```yaml
+sf-cat:
+  script:
+    - sf code-analyzer run --workspace ./force-app/main/default/ --rule-selector Recommended -f analyzer.json
+    - sf cat transform -i analyzer.json -f codeclimate
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+```
+
+The same file can be consumed by stand-alone CodeClimate engines or any tool that accepts the CodeClimate issue array spec.
+
 ## Command Reference
 
 ### `sf cat transform`
 
-| Flag            | Short | Description                                                                                    |
-| --------------- | ----- | ---------------------------------------------------------------------------------------------- |
-| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                 |
-| `--format`      | `-f`  | Output format: `sonar` (default) or `sarif`                                                    |
-| `--output-file` | `-o`  | Path for the converted output (default: `output.json` for `sonar`, `output.sarif` for `sarif`) |
+| Flag            | Short | Description                                                                                             |
+| --------------- | ----- | ------------------------------------------------------------------------------------------------------- |
+| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                          |
+| `--format`      | `-f`  | Output format: `sonar` (default), `sarif`, or `codeclimate`                                             |
+| `--output-file` | `-o`  | Path for the converted output (default: `output.json` / `output.sarif` / `gl-code-quality-report.json`) |
 
 **Examples:**
 
@@ -105,6 +131,7 @@ The same file can be consumed by Azure DevOps' SARIF extension, GitLab's `sast` 
 sf cat transform -i "salesforce-code-analyzer.json" -o "sonar.json"
 sf cat transform -i "salesforce-code-analyzer.json" -f sarif
 sf cat transform -i "salesforce-code-analyzer.json" -f sarif -o "results.sarif"
+sf cat transform -i "salesforce-code-analyzer.json" -f codeclimate
 ```
 
 ## Column Data Handling

@@ -1,6 +1,6 @@
 {
   "name": "sf-cat",
-  "description": "Transform Salesforce Code Analyzer reports into external code quality formats (SonarQube generic issue data, SARIF).",
+  "description": "Transform Salesforce Code Analyzer reports into external code quality formats (SonarQube, SARIF, CodeClimate / GitLab Code Quality).",
   "version": "1.0.4",
   "dependencies": {
     "@oclif/core": "^4.4.0",
@@ -46,6 +46,8 @@
     "sfdx-plugin",
     "sonarqube",
     "sarif",
+    "codeclimate",
+    "gitlab-code-quality",
     "code-scanning",
     "static-analysis",
     "apex",
