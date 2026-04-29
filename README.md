@@ -6,11 +6,13 @@
 [![Maintainability](https://qlty.sh/gh/mcarvin8/projects/sf-cat/maintainability.svg)](https://qlty.sh/gh/mcarvin8/projects/sf-cat)
 [![codecov](https://codecov.io/gh/mcarvin8/sf-cat/graph/badge.svg?token=ENF0XXJGEM)](https://codecov.io/gh/mcarvin8/sf-cat)
 
-A Salesforce CLI plugin that converts Salesforce Code Analyzer output into SonarQube's Generic Issue Data format — so you can surface Salesforce code quality results in SonarQube alongside the rest of your stack.
+A Salesforce CLI plugin that converts Salesforce Code Analyzer output into formats consumable by external code quality platforms — so you can surface Salesforce findings in SonarQube, GitHub Code Scanning, Azure DevOps, GitLab, and other SARIF-aware tools alongside the rest of your stack.
 
 - [Install](#install)
 - [Why sf-cat?](#why-sf-cat)
 - [Quick Start](#quick-start)
+  - [SonarQube](#sonarqube)
+  - [SARIF (GitHub Code Scanning, Azure DevOps, GitLab, ...)](#sarif-github-code-scanning-azure-devops-gitlab-)
 - [Command Reference](#command-reference)
   - [`sf cat transform`](#sf-cat-transform)
 - [Column Data Handling](#column-data-handling)
@@ -27,31 +29,32 @@ sf plugins install sf-cat@latest
 
 **Salesforce Code Analyzer** scans Apex, Visualforce, Flows, and Lightning components using PMD, ESLint, RetireJS, and Salesforce Graph Engine — catching security issues, performance problems, and best-practice violations.
 
-**SonarQube** is where many teams centralize code quality: CI pipelines, PR checks, and dashboards.
+External code quality platforms — **SonarQube**, **GitHub Code Scanning**, **Azure DevOps**, **GitLab**, **Qodana**, etc. — are where many teams centralize results: CI pipelines, PR checks, and dashboards.
 
-The problem: Code Analyzer output isn't compatible with SonarQube.
+The problem: Code Analyzer output isn't compatible with any of them out of the box.
 
-**sf-cat** bridges the gap:
+**sf-cat** bridges the gap by converting Code Analyzer JSON to:
 
-- Converts Code Analyzer JSON to [SonarQube Generic Issue Data](https://docs.sonarsource.com/sonarqube-cloud/enriching/generic-issue-data/)
-- Drops cleanly into `sonar-scanner` reports
-- Gives you one place to see Salesforce findings with the rest of your codebase
+- [SonarQube Generic Issue Data](https://docs.sonarsource.com/sonarqube-cloud/enriching/generic-issue-data/)
+- [SARIF v2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) (GitHub Code Scanning, Azure DevOps, GitLab, Qodana, and any SARIF-aware tool)
 
 ## Quick Start
 
-**1. Run Salesforce Code Analyzer** (JSON output):
+**Run Salesforce Code Analyzer first** (JSON output):
 
 ```bash
 sf code-analyzer run --workspace "./force-app/main/default/" --rule-selector Recommended -f "output.json"
 ```
 
-**2. Convert to SonarQube format:**
+### SonarQube
+
+**1. Convert to SonarQube format:**
 
 ```bash
 sf cat transform -i "output.json" -o "results.json"
 ```
 
-**3. Run SonarQube** with the converted issues.
+**2. Run SonarQube** with the converted issues.
 
 In `sonar-project.properties`:
 
@@ -65,26 +68,50 @@ Or via CLI:
 sonar-scanner -Dsonar.externalIssuesReportPaths=results.json
 ```
 
+### SARIF (GitHub Code Scanning, Azure DevOps, GitLab, ...)
+
+**1. Convert to SARIF:**
+
+```bash
+sf cat transform -i "output.json" -f sarif -o "results.sarif"
+```
+
+Each Code Analyzer engine (PMD, ESLint, RetireJS, SFGE, regex, ...) is emitted as its own SARIF `run`, so consumers display them as distinct tools.
+
+**2. Upload to GitHub Code Scanning** in a workflow:
+
+```yaml
+- name: Upload SARIF
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: results.sarif
+```
+
+The same file can be consumed by Azure DevOps' SARIF extension, GitLab's `sast` artifact (via conversion), Qodana, and any other SARIF v2.1.0–compatible tool.
+
 ## Command Reference
 
 ### `sf cat transform`
 
-| Flag            | Short | Description                                                       |
-| --------------- | ----- | ----------------------------------------------------------------- |
-| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)    |
-| `--output-file` | `-o`  | Path for the SonarQube-compatible output (default: `output.json`) |
+| Flag            | Short | Description                                                                                    |
+| --------------- | ----- | ---------------------------------------------------------------------------------------------- |
+| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                 |
+| `--format`      | `-f`  | Output format: `sonar` (default) or `sarif`                                                    |
+| `--output-file` | `-o`  | Path for the converted output (default: `output.json` for `sonar`, `output.sarif` for `sarif`) |
 
-**Example:**
+**Examples:**
 
 ```bash
 sf cat transform -i "salesforce-code-analyzer.json" -o "sonar.json"
+sf cat transform -i "salesforce-code-analyzer.json" -f sarif
+sf cat transform -i "salesforce-code-analyzer.json" -f sarif -o "results.sarif"
 ```
 
 ## Column Data Handling
 
 Salesforce Code Analyzer sometimes reports `startColumn` and `endColumn` values that exceed the actual line length. SonarQube rejects these and fails the scan.
 
-**sf-cat** strips column values from all issues before output. Line-level highlighting is preserved; all column data is removed so out-of-bounds column data don't cause SonarQube scans to fail.
+**sf-cat** strips column values from all issues before output. Line-level highlighting is preserved; all column data is removed so out-of-bounds column data don't cause downstream scans to fail.
 
 ## Issues
 

@@ -20,40 +20,6 @@ export type CodeAnalyzerOutput = {
   violations: Violation[];
 };
 
-export type SonarQubeIssue = {
-  ruleId: string;
-  engineId: string;
-  severity: string;
-  effortMinutes: number;
-  type: string;
-  primaryLocation: {
-    message: string;
-    filePath: string;
-    textRange: {
-      startLine: number;
-      startColumn?: number;
-      endLine?: number;
-      endColumn?: number;
-    };
-  };
-};
-
-type Impacts = {
-  softwareQuality: string;
-  severity: string;
-};
-
-export type SonarQubeRule = {
-  id: string;
-  name: string;
-  description: string;
-  engineId: string;
-  cleanCodeAttribute: string;
-  type: string;
-  severity: string;
-  impacts: Impacts[];
-};
-
 export type TransformResult = {
   path: string;
 };
