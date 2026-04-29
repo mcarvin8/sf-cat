@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/mcarvin8/sf-cat/compare/v1.2.0...v1.3.0) (2026-04-29)
+
+
+### Features
+
+* add fail on and path normalization flags ([#27](https://github.com/mcarvin8/sf-cat/issues/27)) ([f812a23](https://github.com/mcarvin8/sf-cat/commit/f812a23e64f2d4782ba63f518fd0cf6c469ccdfa))
+
 ## [1.2.0](https://github.com/mcarvin8/sf-cat/compare/v1.1.0...v1.2.0) (2026-04-29)
 
 
