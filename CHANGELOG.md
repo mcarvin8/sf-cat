@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/mcarvin8/sf-cat/compare/v1.1.0...v1.2.0) (2026-04-29)
+
+
+### Features
+
+* add github actions format ([#25](https://github.com/mcarvin8/sf-cat/issues/25)) ([4decb47](https://github.com/mcarvin8/sf-cat/commit/4decb478d58e8bd5c4bf5ad965f66dc08b5330d1))
+
 ## [1.1.0](https://github.com/mcarvin8/sf-cat/compare/v1.0.4...v1.1.0) (2026-04-29)
 
 
