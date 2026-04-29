@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0](https://github.com/mcarvin8/sf-cat/compare/v1.0.4...v1.1.0) (2026-04-29)
+
+
+### Features
+
+* add codeclimate format ([#23](https://github.com/mcarvin8/sf-cat/issues/23)) ([f74c0e8](https://github.com/mcarvin8/sf-cat/commit/f74c0e8c24af3cfe60a7cd80dc13d70fad70ef47))
+* add JUnit format ([#24](https://github.com/mcarvin8/sf-cat/issues/24)) ([5d4d203](https://github.com/mcarvin8/sf-cat/commit/5d4d203267ca0823df391ae8dda8091097196337))
+* add SARIF format ([#21](https://github.com/mcarvin8/sf-cat/issues/21)) ([bec757d](https://github.com/mcarvin8/sf-cat/commit/bec757d8060125fcf4587d330f36b364129d9086))
+
 ## [1.0.4](https://github.com/mcarvin8/sf-cat/compare/v1.0.3...v1.0.4) (2025-07-14)
 
 
