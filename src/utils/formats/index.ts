@@ -3,9 +3,16 @@ import { convertToSonarQube } from './sonar.js';
 import { convertToSarif } from './sarif.js';
 import { convertToCodeClimate } from './codeclimate.js';
 import { convertToJUnit, serializeJUnit } from './junit.js';
+import { convertToGitHubAnnotations, serializeGitHubAnnotations } from './github.js';
 
-export const OUTPUT_FORMATS = ['sonar', 'sarif', 'codeclimate', 'junit'] as const;
+export const OUTPUT_FORMATS = ['sonar', 'sarif', 'codeclimate', 'junit', 'github'] as const;
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
+
+/**
+ * Sentinel value for `defaultOutputFiles` that means "write to stdout instead
+ * of a file." The transform command treats this as a special case.
+ */
+export const STDOUT_SENTINEL = '-';
 
 export type FormatHandler = {
   convert: (input: CodeAnalyzerOutput) => unknown;
@@ -22,6 +29,10 @@ export const formatters: Record<OutputFormat, FormatHandler> = {
     convert: convertToJUnit,
     serialize: (report) => serializeJUnit(report as ReturnType<typeof convertToJUnit>),
   },
+  github: {
+    convert: convertToGitHubAnnotations,
+    serialize: (report) => serializeGitHubAnnotations(report as ReturnType<typeof convertToGitHubAnnotations>),
+  },
 };
 
 export const defaultExtensions: Record<OutputFormat, string> = {
@@ -29,6 +40,7 @@ export const defaultExtensions: Record<OutputFormat, string> = {
   sarif: '.sarif',
   codeclimate: '.json',
   junit: '.xml',
+  github: '',
 };
 
 export const defaultOutputFiles: Record<OutputFormat, string> = {
@@ -36,4 +48,5 @@ export const defaultOutputFiles: Record<OutputFormat, string> = {
   sarif: 'output.sarif',
   codeclimate: 'gl-code-quality-report.json',
   junit: 'junit.xml',
+  github: STDOUT_SENTINEL,
 };

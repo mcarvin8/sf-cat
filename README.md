@@ -15,6 +15,7 @@ A Salesforce CLI plugin that converts Salesforce Code Analyzer output into forma
   - [SARIF (GitHub Code Scanning, Azure DevOps, GitLab, ...)](#sarif-github-code-scanning-azure-devops-gitlab-)
   - [CodeClimate / GitLab Code Quality](#codeclimate--gitlab-code-quality)
   - [JUnit XML (Jenkins, GitHub Actions, GitLab, Azure DevOps, ...)](#junit-xml-jenkins-github-actions-gitlab-azure-devops-)
+  - [GitHub Actions workflow commands (inline PR annotations, no GHAS)](#github-actions-workflow-commands-inline-pr-annotations-no-ghas)
 - [Command Reference](#command-reference)
   - [`sf cat transform`](#sf-cat-transform)
 - [Column Data Handling](#column-data-handling)
@@ -41,6 +42,7 @@ The problem: Code Analyzer output isn't compatible with any of them out of the b
 - [SARIF v2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) (GitHub Code Scanning, Azure DevOps, GitLab, Qodana, and any SARIF-aware tool)
 - [CodeClimate JSON](https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md#data-types) (GitLab [Code Quality](https://docs.gitlab.com/ee/ci/testing/code_quality.html), CodeClimate engines)
 - JUnit XML (Jenkins, GitHub Actions test reporters, GitLab, Azure DevOps, CircleCI, Bitbucket Pipelines, ...)
+- [GitHub Actions workflow commands](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message) (inline PR annotations on GitHub — no Code Scanning / GHAS license required)
 
 ## Quick Start
 
@@ -163,15 +165,38 @@ artifacts:
     testResultsFiles: junit.xml
 ```
 
+### GitHub Actions workflow commands (inline PR annotations, no GHAS)
+
+Use this when you want **inline PR annotations on GitHub** but don't have GitHub Advanced Security enabled (which `upload-sarif` requires on private repos). The plugin prints `::error file=...,line=...::message` lines to stdout; the GitHub Actions runner captures them automatically and renders annotations on the PR Files Changed view.
+
+**Workflow:**
+
+```yaml
+jobs:
+  code-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm i -g @salesforce/cli && sf plugins install sf-cat
+      - run: sf code-analyzer run --workspace ./force-app/main/default/ --rule-selector Recommended -f analyzer.json
+      - run: sf cat transform -i analyzer.json -f github
+```
+
+That's the entire setup — no `upload-sarif`, no Code Scanning configuration, works on every GitHub plan including free private repos and self-hosted runners.
+
+Severity → annotation level: `Critical` / `High` → `error`, `Moderate` → `warning`, `Low` / `Info` → `notice`. The Code Analyzer rule id is used as the annotation title; the violation message is the body.
+
+> Note: GitHub caps annotations at 10 errors / 10 warnings / 10 notices **per workflow step**. For larger result sets, also produce a SARIF or JUnit artifact in the same job — workflow commands are best for "show me the worst findings inline on this PR" while the artifact is your full record.
+
 ## Command Reference
 
 ### `sf cat transform`
 
-| Flag            | Short | Description                                                                                                           |
-| --------------- | ----- | --------------------------------------------------------------------------------------------------------------------- |
-| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                                        |
-| `--format`      | `-f`  | Output format: `sonar` (default), `sarif`, `codeclimate`, or `junit`                                                  |
-| `--output-file` | `-o`  | Path for the converted output (default: `output.json` / `output.sarif` / `gl-code-quality-report.json` / `junit.xml`) |
+| Flag            | Short | Description                                                                                                      |
+| --------------- | ----- | ---------------------------------------------------------------------------------------------------------------- |
+| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                                   |
+| `--format`      | `-f`  | Output format: `sonar` (default), `sarif`, `codeclimate`, `junit`, or `github`                                   |
+| `--output-file` | `-o`  | Path for the converted output. Defaults to a per-format filename; `github` writes to stdout when `-o` is omitted |
 
 **Examples:**
 
@@ -181,11 +206,12 @@ sf cat transform -i "salesforce-code-analyzer.json" -f sarif
 sf cat transform -i "salesforce-code-analyzer.json" -f sarif -o "results.sarif"
 sf cat transform -i "salesforce-code-analyzer.json" -f codeclimate
 sf cat transform -i "salesforce-code-analyzer.json" -f junit
+sf cat transform -i "salesforce-code-analyzer.json" -f github
 ```
 
 ## Column Data Handling
 
-Salesforce Code Analyzer sometimes reports `startColumn` and `endColumn` values that exceed the actual line length. SonarQube rejects these and fails the scan.
+Salesforce Code Analyzer sometimes reports `startColumn` and `endColumn` values that exceed the actual line length. External tools will reject these and fail the scan.
 
 **sf-cat** strips column values from all issues before output. Line-level highlighting is preserved; all column data is removed so out-of-bounds column data don't cause downstream scans to fail.
 

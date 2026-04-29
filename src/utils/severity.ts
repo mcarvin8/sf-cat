@@ -26,6 +26,16 @@ export const sarifLevel: Record<NormalizedSeverity, 'error' | 'warning' | 'note'
   info: 'note',
 };
 
+export type GitHubLevel = 'error' | 'warning' | 'notice';
+
+export const githubLevel: Record<NormalizedSeverity, GitHubLevel> = {
+  critical: 'error',
+  high: 'error',
+  moderate: 'warning',
+  low: 'notice',
+  info: 'notice',
+};
+
 export type CodeClimateSeverity = 'info' | 'minor' | 'major' | 'critical' | 'blocker';
 
 export const codeClimateSeverity: Record<NormalizedSeverity, CodeClimateSeverity> = {
