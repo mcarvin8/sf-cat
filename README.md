@@ -14,6 +14,7 @@ A Salesforce CLI plugin that converts Salesforce Code Analyzer output into forma
   - [SonarQube](#sonarqube)
   - [SARIF (GitHub Code Scanning, Azure DevOps, GitLab, ...)](#sarif-github-code-scanning-azure-devops-gitlab-)
   - [CodeClimate / GitLab Code Quality](#codeclimate--gitlab-code-quality)
+  - [JUnit XML (Jenkins, GitHub Actions, GitLab, Azure DevOps, ...)](#junit-xml-jenkins-github-actions-gitlab-azure-devops-)
 - [Command Reference](#command-reference)
   - [`sf cat transform`](#sf-cat-transform)
 - [Column Data Handling](#column-data-handling)
@@ -39,6 +40,7 @@ The problem: Code Analyzer output isn't compatible with any of them out of the b
 - [SonarQube Generic Issue Data](https://docs.sonarsource.com/sonarqube-cloud/enriching/generic-issue-data/)
 - [SARIF v2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) (GitHub Code Scanning, Azure DevOps, GitLab, Qodana, and any SARIF-aware tool)
 - [CodeClimate JSON](https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md#data-types) (GitLab [Code Quality](https://docs.gitlab.com/ee/ci/testing/code_quality.html), CodeClimate engines)
+- JUnit XML (Jenkins, GitHub Actions test reporters, GitLab, Azure DevOps, CircleCI, Bitbucket Pipelines, ...)
 
 ## Quick Start
 
@@ -115,15 +117,61 @@ sf-cat:
 
 The same file can be consumed by stand-alone CodeClimate engines or any tool that accepts the CodeClimate issue array spec.
 
+### JUnit XML (Jenkins, GitHub Actions, GitLab, Azure DevOps, ...)
+
+Use this when your CI doesn't accept SARIF (no GHAS, GitLab Free, ...) or you simply want every violation to surface in the standard CI test report panel.
+
+**1. Convert to JUnit XML:**
+
+```bash
+sf cat transform -i "output.json" -f junit
+```
+
+Each Code Analyzer engine becomes its own `<testsuite>`; each violation becomes a failing `<testcase>`. The default output path is `junit.xml`.
+
+**Jenkins:**
+
+```groovy
+junit 'junit.xml'
+```
+
+**GitHub Actions** (with [`dorny/test-reporter`](https://github.com/dorny/test-reporter)):
+
+```yaml
+- uses: dorny/test-reporter@v2
+  if: always()
+  with:
+    name: Salesforce Code Analyzer
+    path: junit.xml
+    reporter: java-junit
+```
+
+**GitLab CI:**
+
+```yaml
+artifacts:
+  reports:
+    junit: junit.xml
+```
+
+**Azure DevOps:**
+
+```yaml
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: JUnit
+    testResultsFiles: junit.xml
+```
+
 ## Command Reference
 
 ### `sf cat transform`
 
-| Flag            | Short | Description                                                                                             |
-| --------------- | ----- | ------------------------------------------------------------------------------------------------------- |
-| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                          |
-| `--format`      | `-f`  | Output format: `sonar` (default), `sarif`, or `codeclimate`                                             |
-| `--output-file` | `-o`  | Path for the converted output (default: `output.json` / `output.sarif` / `gl-code-quality-report.json`) |
+| Flag            | Short | Description                                                                                                           |
+| --------------- | ----- | --------------------------------------------------------------------------------------------------------------------- |
+| `--input-file`  | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                                        |
+| `--format`      | `-f`  | Output format: `sonar` (default), `sarif`, `codeclimate`, or `junit`                                                  |
+| `--output-file` | `-o`  | Path for the converted output (default: `output.json` / `output.sarif` / `gl-code-quality-report.json` / `junit.xml`) |
 
 **Examples:**
 
@@ -132,6 +180,7 @@ sf cat transform -i "salesforce-code-analyzer.json" -o "sonar.json"
 sf cat transform -i "salesforce-code-analyzer.json" -f sarif
 sf cat transform -i "salesforce-code-analyzer.json" -f sarif -o "results.sarif"
 sf cat transform -i "salesforce-code-analyzer.json" -f codeclimate
+sf cat transform -i "salesforce-code-analyzer.json" -f junit
 ```
 
 ## Column Data Handling
