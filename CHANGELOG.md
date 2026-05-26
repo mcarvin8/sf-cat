@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/mcarvin8/sf-cat/compare/v1.3.0...v1.3.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* **deps:** pin direct dependencies to exact versions ([#29](https://github.com/mcarvin8/sf-cat/issues/29)) ([b2824b9](https://github.com/mcarvin8/sf-cat/commit/b2824b920e36c38586016972a6d3805d6e5c2ef1))
+
 ## [1.3.0](https://github.com/mcarvin8/sf-cat/compare/v1.2.0...v1.3.0) (2026-04-29)
 
 
