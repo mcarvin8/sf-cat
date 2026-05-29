@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/mcarvin8/sf-cat/compare/v1.3.1...v1.3.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* annotation cap, sonar impacts, endLine fallback, empty path guard ([#31](https://github.com/mcarvin8/sf-cat/issues/31)) ([da16716](https://github.com/mcarvin8/sf-cat/commit/da16716903d744c5fc1c91233afa3249b74d5d63))
+
 ## [1.3.1](https://github.com/mcarvin8/sf-cat/compare/v1.3.0...v1.3.1) (2026-05-26)
 
 
