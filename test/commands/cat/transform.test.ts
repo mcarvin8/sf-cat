@@ -12,7 +12,7 @@ import { convertToSarif } from '../../../src/utils/formats/sarif.js';
 import { convertToCodeClimate } from '../../../src/utils/formats/codeclimate.js';
 import { convertToJUnit, serializeJUnit } from '../../../src/utils/formats/junit.js';
 import { convertToGitHubAnnotations, serializeGitHubAnnotations } from '../../../src/utils/formats/github.js';
-import { countAtOrAboveThreshold } from '../../../src/utils/severity.js';
+import { countAtOrAboveThreshold, mapSonarSoftwareQualities } from '../../../src/utils/severity.js';
 import { normalizePaths } from '../../../src/utils/normalizePaths.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 
@@ -157,6 +157,49 @@ describe('convertToSonarQube unit tests', () => {
     await writeFile(tempOutputPath, JSON.stringify(output, null, 2));
     const parsed = JSON.parse(await readFile(tempOutputPath, 'utf8')) as SonarQubeReport;
     expect(parsed).toEqual(output);
+  });
+
+  it('should use startLine as endLine when violation has no endLine', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'NoEndLine',
+          engine: 'pmd',
+          severity: 3,
+          tags: ['bestpractices'],
+          primaryLocationIndex: 0,
+          message: 'Missing end line.',
+          locations: [{ file: 'force-app/main/default/classes/X.cls', startLine: 7 }],
+        },
+      ],
+    };
+    const output = convertToSonarQube(input);
+    expect(output.issues[0].primaryLocation.textRange).toEqual({ startLine: 7, endLine: 7 });
+  });
+});
+
+describe('mapSonarSoftwareQualities unit tests', () => {
+  it('should fall back to MAINTAINABILITY when no tags match known sonar qualities', () => {
+    expect(mapSonarSoftwareQualities([])).toEqual(['MAINTAINABILITY']);
+    expect(mapSonarSoftwareQualities(['unknowntag', 'anotherbadtag'])).toEqual(['MAINTAINABILITY']);
+  });
+
+  it('should map known tags to valid SonarQube softwareQuality values', () => {
+    expect(mapSonarSoftwareQualities(['security'])).toEqual(['SECURITY']);
+    expect(mapSonarSoftwareQualities(['errorprone'])).toEqual(['RELIABILITY']);
+    expect(mapSonarSoftwareQualities(['maintainability'])).toEqual(['MAINTAINABILITY']);
+  });
+
+  it('should deduplicate qualities when multiple tags map to the same value', () => {
+    const result = mapSonarSoftwareQualities(['errorprone', 'reliability', 'performance']);
+    expect(result).toEqual(['RELIABILITY']);
+  });
+
+  it('should return multiple qualities when tags map to different values', () => {
+    const result = mapSonarSoftwareQualities(['security', 'errorprone']);
+    expect(result).toContain('SECURITY');
+    expect(result).toContain('RELIABILITY');
+    expect(result).toHaveLength(2);
   });
 });
 
