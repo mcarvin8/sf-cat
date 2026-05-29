@@ -805,6 +805,31 @@ describe('serializeGitHubAnnotations unit tests', () => {
     expect(lines[0].startsWith('::error ')).toBe(true);
     expect(lines[1].startsWith('::notice ')).toBe(true);
   });
+
+  it('serializeGitHubAnnotations should emit all annotations when count is within limit', () => {
+    const annotations = convertToGitHubAnnotations(mockAnalyzerInput);
+    const out = serializeGitHubAnnotations(annotations.slice(0, 50));
+    expect(out.trimEnd().split('\n')).toHaveLength(annotations.length);
+  });
+
+  it('slicing annotations to max-annotations cap should truncate output', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: Array.from({ length: 5 }, (_, i) => ({
+        rule: `R${i}`,
+        engine: 'pmd',
+        severity: 2,
+        tags: ['security'],
+        primaryLocationIndex: 0,
+        message: `msg${i}`,
+        locations: [{ file: `file${i}.cls`, startLine: i + 1 }],
+      })),
+    };
+    const all = convertToGitHubAnnotations(input);
+    expect(all).toHaveLength(5);
+    const capped = all.slice(0, 3);
+    const out = serializeGitHubAnnotations(capped);
+    expect(out.trimEnd().split('\n')).toHaveLength(3);
+  });
 });
 
 describe('countAtOrAboveThreshold unit tests', () => {
@@ -899,10 +924,12 @@ describe('normalizePaths unit tests', () => {
     expect(out.violations[0].locations[0].file).toBe('/reports/X.cls');
   });
 
-  it('should reduce the path to "" when it equals the prefix exactly', () => {
+  it('should leave the path unchanged when it equals the prefix exactly (no valid relative path)', () => {
+    // A file path identical to the prefix has no meaningful relative form — return as-is
+    // rather than producing an empty string that all downstream formatters would mishandle.
     const input = buildInput('/repo');
     const out = normalizePaths(input, { stripPrefix: '/repo' });
-    expect(out.violations[0].locations[0].file).toBe('');
+    expect(out.violations[0].locations[0].file).toBe('/repo');
   });
 
   it('should handle multi-violation, multi-location inputs', () => {

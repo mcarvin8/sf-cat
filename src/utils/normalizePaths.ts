@@ -42,7 +42,6 @@ export function normalizePaths(input: CodeAnalyzerOutput, opts: PathRewriteOptio
 
 function stripLeadingPrefix(file: string, prefix: string): string {
   const normalized = file.replace(/\\/g, '/');
-  if (normalized === prefix) return '';
   if (normalized.startsWith(`${prefix}/`)) {
     return normalized.slice(prefix.length + 1);
   }

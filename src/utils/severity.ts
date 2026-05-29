@@ -56,6 +56,20 @@ export type CodeClimateCategory =
   | 'Security'
   | 'Style';
 
+// SonarQube only accepts these three values for softwareQuality.
+const TAG_TO_SONAR_QUALITY: Record<string, string> = {
+  security: 'SECURITY',
+  errorprone: 'RELIABILITY',
+  reliability: 'RELIABILITY',
+  performance: 'RELIABILITY',
+  design: 'MAINTAINABILITY',
+  documentation: 'MAINTAINABILITY',
+  portability: 'MAINTAINABILITY',
+  bestpractices: 'MAINTAINABILITY',
+  codestyle: 'MAINTAINABILITY',
+  maintainability: 'MAINTAINABILITY',
+};
+
 const TAG_TO_CATEGORY: Record<string, CodeClimateCategory> = {
   security: 'Security',
   errorprone: 'Bug Risk',
@@ -120,6 +134,21 @@ export function normalizeSeverity(severity: number): NormalizedSeverity {
  * Aligned with COMMON_TAGS.CATEGORIES from code-analyzer-engine-api:
  * https://github.com/forcedotcom/code-analyzer-core/blob/dev/packages/code-analyzer-engine-api/src/rules.ts
  */
+/**
+ * Maps Code Analyzer tags to valid SonarQube softwareQuality values.
+ * SonarQube rejects any value outside MAINTAINABILITY, RELIABILITY, SECURITY.
+ * Deduplicates; falls back to ['MAINTAINABILITY'] when no tags match.
+ */
+export function mapSonarSoftwareQualities(tags: string[]): string[] {
+  const out = new Set<string>();
+  for (const tag of tags) {
+    const q = TAG_TO_SONAR_QUALITY[tag.toLowerCase()];
+    if (q) out.add(q);
+  }
+  if (out.size === 0) out.add('MAINTAINABILITY');
+  return Array.from(out);
+}
+
 export function mapIssueType(tags: string[]): IssueType {
   const tagSet = new Set(tags.map((tag) => tag.toLowerCase()));
   if (tagSet.has('security')) return 'VULNERABILITY';
