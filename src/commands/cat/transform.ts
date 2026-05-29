@@ -11,6 +11,7 @@ import {
   defaultOutputFiles,
   formatters,
 } from '../../utils/formats/index.js';
+import { GitHubAnnotationReport } from '../../utils/formats/github.js';
 import { FAIL_ON_THRESHOLDS, FailOnThreshold, countAtOrAboveThreshold } from '../../utils/severity.js';
 import { normalizePaths } from '../../utils/normalizePaths.js';
 
@@ -53,6 +54,11 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
       exclusive: ['strip-prefix'],
       default: false,
     }),
+    'max-annotations': Flags.integer({
+      summary: messages.getMessage('flags.max-annotations.summary'),
+      default: 50,
+      min: 1,
+    }),
   };
 
   public async run(): Promise<TransformResult> {
@@ -69,7 +75,21 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
     });
 
     const handler = formatters[format];
-    const serialized = handler.serialize(handler.convert(input));
+    let converted = handler.convert(input);
+
+    if (format === 'github') {
+      const annotations = converted as GitHubAnnotationReport;
+      const maxAnnotations = flags['max-annotations'];
+      if (annotations.length > maxAnnotations) {
+        const dropped = annotations.length - maxAnnotations;
+        this.warn(
+          `${annotations.length} annotations generated; only the first ${maxAnnotations} will be emitted (${dropped} dropped). GitHub silently drops annotations beyond its per-step cap. Increase --max-annotations or use --format sarif/junit for a full artifact.`,
+        );
+        converted = annotations.slice(0, maxAnnotations);
+      }
+    }
+
+    const serialized = handler.serialize(converted);
 
     if (outputPath === STDOUT_SENTINEL) {
       process.stdout.write(serialized);

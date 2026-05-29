@@ -40,3 +40,7 @@ Strip a leading prefix from every violation file path before formatting (for exa
 # flags.project-relative.summary
 
 Make every violation file path relative to the Salesforce DX project root (resolved by walking upward from the current directory until an `sfdx-project.json` is found). Mutually exclusive with `--strip-prefix`.
+
+# flags.max-annotations.summary
+
+Maximum number of GitHub Actions workflow command annotations to emit (only applies to `--format github`). GitHub silently drops annotations beyond its per-step cap; this flag lets you control how many are emitted and surfaces a warning when the total exceeds the limit. Defaults to 50.

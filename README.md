@@ -191,7 +191,7 @@ No `upload-sarif`, no Code Scanning configuration needed — works on every GitH
 
 Severity → annotation level: `Critical` / `High` → `error`, `Moderate` → `warning`, `Low` / `Info` → `notice`.
 
-> **Note:** GitHub caps annotations at 10 errors / 10 warnings / 10 notices per workflow step. For larger result sets, also produce a SARIF or JUnit artifact in the same job — workflow commands are best for surfacing the worst findings inline on a PR, while the artifact is your full record.
+> **Note:** GitHub caps annotations at 10 errors / 10 warnings / 10 notices per workflow step and silently drops the rest. sf-cat enforces a default cap of 50 and prints a warning when violations exceed it. Use `--max-annotations` to adjust. For full results, also produce a SARIF or JUnit artifact in the same job.
 
 ## Failing the Build on High-Severity Findings
 
@@ -238,6 +238,7 @@ sf-cat strips all column values before output. Line-level highlighting is preser
 | `--fail-on`          |       | Exit non-zero when any violation is at this severity or higher: `critical`, `high`, `moderate`, `low`, `info`, or `never` (default)                                   |
 | `--strip-prefix`     |       | Strip a leading path prefix from every violation file path before formatting                                                                                          |
 | `--project-relative` |       | Make every violation file path relative to the SFDX project root (`sfdx-project.json` location)                                                                       |
+| `--max-annotations`  |       | Maximum annotations to emit for `--format github`. Default: `50`. Prints a warning and truncates when total exceeds this limit.                                       |
 
 **Examples:**
 

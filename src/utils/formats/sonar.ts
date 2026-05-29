@@ -1,5 +1,5 @@
 import { CodeAnalyzerOutput } from '../types.js';
-import { mapIssueType, normalizeSeverity, sonarSeverity, IssueType } from '../severity.js';
+import { mapIssueType, normalizeSeverity, sonarSeverity, IssueType, mapSonarSoftwareQualities } from '../severity.js';
 
 export type SonarQubeIssue = {
   ruleId: string;
@@ -58,8 +58,8 @@ export function convertToSonarQube(input: CodeAnalyzerOutput): SonarQubeReport {
         cleanCodeAttribute: 'FORMATTED',
         type: issueType,
         severity,
-        impacts: v.tags.map((tag) => ({
-          softwareQuality: tag.toUpperCase(),
+        impacts: mapSonarSoftwareQualities(v.tags).map((softwareQuality) => ({
+          softwareQuality,
           severity: 'MEDIUM',
         })),
       });
@@ -77,7 +77,7 @@ export function convertToSonarQube(input: CodeAnalyzerOutput): SonarQubeReport {
         filePath: loc.file.replace(/\\/g, '/'),
         textRange: {
           startLine: loc.startLine,
-          endLine: loc.endLine,
+          endLine: loc.endLine ?? loc.startLine,
         },
       },
     });
