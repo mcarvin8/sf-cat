@@ -159,6 +159,52 @@ describe('convertToSonarQube unit tests', () => {
     expect(output.issues[0].type).toBe('BUG');
   });
 
+  it('should use the first violation message as rule description when deduplicating', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'DupRule',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'first message',
+          locations: [{ file: 'a.cls', startLine: 1 }],
+        },
+        {
+          rule: 'DupRule',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'second message',
+          locations: [{ file: 'b.cls', startLine: 1 }],
+        },
+      ],
+    };
+    const output = convertToSonarQube(input);
+    expect(output.rules).toHaveLength(1);
+    expect(output.rules[0].description).toBe('first message');
+  });
+
+  it('should normalize Windows-style backslash paths to forward slashes in filePath', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [{ file: 'force-app\\main\\default\\X.cls', startLine: 1 }],
+        },
+      ],
+    };
+    const output = convertToSonarQube(input);
+    expect(output.issues[0].primaryLocation.filePath).toBe('force-app/main/default/X.cls');
+  });
+
   it('should round-trip through JSON unchanged', async () => {
     const output: SonarQubeReport = convertToSonarQube(mockAnalyzerInput);
     await writeFile(tempOutputPath, JSON.stringify(output, null, 2));
@@ -308,6 +354,36 @@ describe('convertToSarif unit tests', () => {
     expect(log.runs).toHaveLength(1);
     expect(log.runs[0].tool.driver.rules).toHaveLength(1);
     expect(log.runs[0].results).toHaveLength(2);
+  });
+
+  it('should use first violation message for rule descriptions when deduplicating', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'DupRule',
+          engine: 'pmd',
+          severity: 2,
+          tags: ['security'],
+          primaryLocationIndex: 0,
+          message: 'first message',
+          locations: [{ file: 'a.cls', startLine: 1 }],
+        },
+        {
+          rule: 'DupRule',
+          engine: 'pmd',
+          severity: 2,
+          tags: ['security'],
+          primaryLocationIndex: 0,
+          message: 'second message',
+          locations: [{ file: 'b.cls', startLine: 2 }],
+        },
+      ],
+    };
+    const log = convertToSarif(input);
+    expect(log.runs[0].tool.driver.rules).toHaveLength(1);
+    const rule = log.runs[0].tool.driver.rules?.[0];
+    expect((rule?.shortDescription as { text: string })?.text).toBe('first message');
+    expect((rule?.fullDescription as { text: string })?.text).toBe('first message');
   });
 
   it('should normalize Windows-style backslash paths to forward slashes', () => {
@@ -625,6 +701,39 @@ describe('convertToJUnit unit tests', () => {
     };
     const report = convertToJUnit(input);
     expect(report.testsuites[0].testcases[0].failure.body).not.toContain('tags:');
+  });
+
+  it('should produce exact body lines with no blanks or unexpected content when tags present', () => {
+    const report = convertToJUnit(mockAnalyzerInput);
+    const body = report.testsuites[0].testcases[0].failure.body;
+    expect(body.split('\n')).toEqual([
+      'AvoidOldSalesforceApiVersions (regex, severity high)',
+      'at force-app/main/default/classes/OldApi.cls:1',
+      'Avoid using a Salesforce API version that is more than 3 years old.',
+      'tags: maintainability',
+    ]);
+  });
+
+  it('should produce exact body lines with no blanks or unexpected content when no tags', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'msg',
+          locations: [{ file: 'a.cls', startLine: 3 }],
+        },
+      ],
+    };
+    const report = convertToJUnit(input);
+    expect(report.testsuites[0].testcases[0].failure.body.split('\n')).toEqual([
+      'R (pmd, severity high)',
+      'at a.cls:3',
+      'msg',
+    ]);
   });
 });
 
@@ -1193,6 +1302,10 @@ describe('sonarSeverity mapping completeness', () => {
   it('should map severity 1 (critical) to BLOCKER in SonarQube output', () => {
     expect(convertToSonarQube(mkInput(1)).issues[0].severity).toBe('BLOCKER');
     expect(convertToSonarQube(mkInput(1)).rules[0].severity).toBe('BLOCKER');
+  });
+
+  it('should map severity 4 (low) to MINOR in SonarQube output', () => {
+    expect(convertToSonarQube(mkInput(4)).issues[0].severity).toBe('MINOR');
   });
 
   it('should map severity 5 (info) to INFO in SonarQube output', () => {
