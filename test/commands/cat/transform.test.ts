@@ -1084,4 +1084,26 @@ describe('normalizePaths --project-relative integration', () => {
       ),
     ).toThrow(/sfdx-project\.json/);
   });
+
+  it('should fall back to process.cwd() when no cwd option is provided', () => {
+    // process.cwd() during test runs is the repo root, which has no sfdx-project.json
+    expect(() =>
+      normalizePaths(
+        {
+          violations: [
+            {
+              rule: 'R',
+              engine: 'pmd',
+              severity: 2,
+              tags: [],
+              primaryLocationIndex: 0,
+              message: 'm',
+              locations: [{ file: '/x.cls', startLine: 1 }],
+            },
+          ],
+        },
+        { projectRelative: true },
+      ),
+    ).toThrow(/sfdx-project\.json/);
+  });
 });
