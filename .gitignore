@@ -49,3 +49,7 @@ oclif.lock
 *.log
 stderr*.txt
 stdout*.txt
+
+# stryker mutation testing
+.stryker-tmp
+reports
