@@ -7,6 +7,7 @@ const PROJECT_MARKER = 'sfdx-project.json';
 export type PathRewriteOptions = {
   stripPrefix?: string;
   projectRelative?: boolean;
+  cwd?: string;
 };
 
 /**
@@ -22,7 +23,7 @@ export type PathRewriteOptions = {
  * Windows-style absolute paths from CI runners work without manual escaping.
  */
 export function normalizePaths(input: CodeAnalyzerOutput, opts: PathRewriteOptions): CodeAnalyzerOutput {
-  const rawPrefix = opts.projectRelative ? findSfdxProjectRoot() : opts.stripPrefix;
+  const rawPrefix = opts.projectRelative ? findSfdxProjectRoot(opts.cwd) : opts.stripPrefix;
   if (!rawPrefix) return input;
 
   const prefix = rawPrefix.replace(/\\/g, '/').replace(/\/$/, '');
@@ -53,8 +54,8 @@ function stripLeadingPrefix(file: string, prefix: string): string {
  * `sfdx-project.json` file. Returns the absolute path of the directory that
  * contains it. Throws a helpful error when no marker is found.
  */
-function findSfdxProjectRoot(): string {
-  let current = resolve(process.cwd());
+function findSfdxProjectRoot(cwd?: string): string {
+  let current = resolve(cwd ?? process.cwd());
   const { root } = parse(current);
 
   for (;;) {

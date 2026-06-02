@@ -1028,17 +1028,14 @@ describe('normalizePaths unit tests', () => {
 
 describe('normalizePaths --project-relative integration', () => {
   let tempDir: string;
-  let originalCwd: string;
 
   beforeEach(async () => {
-    originalCwd = process.cwd();
     // Use realpath so the temp dir matches what process.cwd() reports on
     // macOS, where /var/folders/... is a symlink to /private/var/folders/...
     tempDir = await realpath(await mkdtemp(join(tmpdir(), 'sf-cat-proj-')));
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -1047,8 +1044,6 @@ describe('normalizePaths --project-relative integration', () => {
     const subDir = join(projectDir, 'force-app', 'main', 'default');
     await mkdir(subDir, { recursive: true });
     await writeFile(join(projectDir, 'sfdx-project.json'), '{"packageDirectories":[]}');
-
-    process.chdir(subDir);
 
     const projectDirNormalized = projectDir.replace(/\\/g, '/');
     const input: CodeAnalyzerOutput = {
@@ -1065,12 +1060,11 @@ describe('normalizePaths --project-relative integration', () => {
       ],
     };
 
-    const out = normalizePaths(input, { projectRelative: true });
+    const out = normalizePaths(input, { projectRelative: true, cwd: subDir });
     expect(out.violations[0].locations[0].file).toBe('force-app/main/default/X.cls');
   });
 
   it('should throw a helpful error when no sfdx-project.json is found above cwd', () => {
-    process.chdir(tempDir);
     expect(() =>
       normalizePaths(
         {
@@ -1086,7 +1080,7 @@ describe('normalizePaths --project-relative integration', () => {
             },
           ],
         },
-        { projectRelative: true },
+        { projectRelative: true, cwd: tempDir },
       ),
     ).toThrow(/sfdx-project\.json/);
   });
