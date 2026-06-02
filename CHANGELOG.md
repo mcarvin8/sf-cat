@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/mcarvin8/sf-cat/compare/v1.3.2...v1.4.0) (2026-06-02)
+
+
+### Features
+
+* add Stryker mutation testing with worker-safe cwd handling ([#33](https://github.com/mcarvin8/sf-cat/issues/33)) ([ea15ddc](https://github.com/mcarvin8/sf-cat/commit/ea15ddc9e1a26ed0fddeeff72d078563a60c86aa))
+
 ## [1.3.2](https://github.com/mcarvin8/sf-cat/compare/v1.3.1...v1.3.2) (2026-05-29)
 
 
