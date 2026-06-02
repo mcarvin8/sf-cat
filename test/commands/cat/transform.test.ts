@@ -12,6 +12,13 @@ import { convertToSarif } from '../../../src/utils/formats/sarif.js';
 import { convertToCodeClimate } from '../../../src/utils/formats/codeclimate.js';
 import { convertToJUnit, serializeJUnit } from '../../../src/utils/formats/junit.js';
 import { convertToGitHubAnnotations, serializeGitHubAnnotations } from '../../../src/utils/formats/github.js';
+import {
+  STDOUT_SENTINEL,
+  formatters,
+  defaultExtensions,
+  defaultOutputFiles,
+  OUTPUT_FORMATS,
+} from '../../../src/utils/formats/index.js';
 import { countAtOrAboveThreshold, mapSonarSoftwareQualities } from '../../../src/utils/severity.js';
 import { normalizePaths } from '../../../src/utils/normalizePaths.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
@@ -1105,5 +1112,364 @@ describe('normalizePaths --project-relative integration', () => {
         { projectRelative: true },
       ),
     ).toThrow(/sfdx-project\.json/);
+  });
+});
+
+// ─── formats/index constants ─────────────────────────────────────────────────
+
+describe('formats/index module constants', () => {
+  it('STDOUT_SENTINEL is the dash character', () => {
+    expect(STDOUT_SENTINEL).toBe('-');
+  });
+
+  it('OUTPUT_FORMATS includes all five supported formats', () => {
+    expect(OUTPUT_FORMATS).toContain('sonar');
+    expect(OUTPUT_FORMATS).toContain('sarif');
+    expect(OUTPUT_FORMATS).toContain('codeclimate');
+    expect(OUTPUT_FORMATS).toContain('junit');
+    expect(OUTPUT_FORMATS).toContain('github');
+  });
+
+  it('formatters has a convert and serialize function for every output format', () => {
+    for (const fmt of OUTPUT_FORMATS) {
+      expect(typeof formatters[fmt].convert).toBe('function');
+      expect(typeof formatters[fmt].serialize).toBe('function');
+    }
+  });
+
+  it('formatters json serializers produce pretty-printed JSON', () => {
+    expect(formatters.sonar.serialize({ rules: [], issues: [] })).toContain('"rules"');
+    expect(formatters.sarif.serialize({ version: '2.1.0', runs: [] })).toContain('"version"');
+    expect(formatters.codeclimate.serialize([])).toBe('[]');
+  });
+
+  it('formatters junit serializer delegates to serializeJUnit', () => {
+    const report = convertToJUnit(mockAnalyzerInput);
+    const xml = formatters.junit.serialize(report);
+    expect(xml).toContain('<testsuites');
+  });
+
+  it('formatters github serializer delegates to serializeGitHubAnnotations', () => {
+    const annotations = convertToGitHubAnnotations(mockAnalyzerInput);
+    const out = formatters.github.serialize(annotations);
+    expect(typeof out).toBe('string');
+    expect(out).toContain('::error');
+  });
+
+  it('defaultExtensions maps all output formats to the correct file extension', () => {
+    expect(defaultExtensions.sonar).toBe('.json');
+    expect(defaultExtensions.sarif).toBe('.sarif');
+    expect(defaultExtensions.codeclimate).toBe('.json');
+    expect(defaultExtensions.junit).toBe('.xml');
+    expect(defaultExtensions.github).toBe('');
+  });
+
+  it('defaultOutputFiles maps all output formats to the correct default filename', () => {
+    expect(defaultOutputFiles.sonar).toBe('output.json');
+    expect(defaultOutputFiles.sarif).toBe('output.sarif');
+    expect(defaultOutputFiles.codeclimate).toBe('gl-code-quality-report.json');
+    expect(defaultOutputFiles.junit).toBe('junit.xml');
+    expect(defaultOutputFiles.github).toBe(STDOUT_SENTINEL);
+  });
+});
+
+// ─── severity mapping completeness ───────────────────────────────────────────
+
+describe('sonarSeverity mapping completeness', () => {
+  const mkInput = (severity: number): CodeAnalyzerOutput => ({
+    violations: [
+      {
+        rule: 'R',
+        engine: 'pmd',
+        severity,
+        tags: [],
+        primaryLocationIndex: 0,
+        message: 'm',
+        locations: [{ file: 'x.cls', startLine: 1 }],
+      },
+    ],
+  });
+
+  it('should map severity 1 (critical) to BLOCKER in SonarQube output', () => {
+    expect(convertToSonarQube(mkInput(1)).issues[0].severity).toBe('BLOCKER');
+    expect(convertToSonarQube(mkInput(1)).rules[0].severity).toBe('BLOCKER');
+  });
+
+  it('should map severity 5 (info) to INFO in SonarQube output', () => {
+    expect(convertToSonarQube(mkInput(5)).issues[0].severity).toBe('INFO');
+  });
+
+  it('should map severity 1 (critical) to SARIF level error', () => {
+    const log = convertToSarif(mkInput(1));
+    expect(log.runs[0].results?.[0].level).toBe('error');
+    expect(log.runs[0].tool.driver.rules?.[0].defaultConfiguration?.level).toBe('error');
+  });
+
+  it('should map severity 4 (low) to SARIF level note', () => {
+    const log = convertToSarif(mkInput(4));
+    expect(log.runs[0].results?.[0].level).toBe('note');
+    expect(log.runs[0].tool.driver.rules?.[0].defaultConfiguration?.level).toBe('note');
+  });
+});
+
+describe('mapSonarSoftwareQualities tag isolation', () => {
+  it('should map reliability tag to RELIABILITY without relying on other tags', () => {
+    expect(mapSonarSoftwareQualities(['reliability'])).toEqual(['RELIABILITY']);
+  });
+
+  it('should map performance tag to RELIABILITY without relying on other tags', () => {
+    expect(mapSonarSoftwareQualities(['performance'])).toEqual(['RELIABILITY']);
+  });
+
+  it('should map design/documentation/portability/bestpractices/codestyle/maintainability to MAINTAINABILITY', () => {
+    for (const tag of ['design', 'documentation', 'portability', 'bestpractices', 'codestyle', 'maintainability']) {
+      const result = mapSonarSoftwareQualities(['security', tag]);
+      expect(result).toContain('SECURITY');
+      expect(result).toContain('MAINTAINABILITY');
+      expect(result).toHaveLength(2);
+    }
+  });
+});
+
+// ─── convertToCodeClimate TAG_TO_CATEGORY completeness ───────────────────────
+
+describe('convertToCodeClimate TAG_TO_CATEGORY completeness', () => {
+  const mkViolation = (tags: string[], file = 'a.cls') => ({
+    rule: 'R',
+    engine: 'pmd',
+    severity: 2,
+    tags,
+    primaryLocationIndex: 0,
+    message: 'm',
+    locations: [{ file, startLine: 1 }],
+  });
+
+  it('should map reliability tag to Bug Risk category', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['reliability'])] });
+    expect(out[0].categories).toContain('Bug Risk');
+  });
+
+  it('should map performance tag to Performance category', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['performance'])] });
+    expect(out[0].categories).toContain('Performance');
+  });
+
+  it('should map design tag to Complexity category', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['design'])] });
+    expect(out[0].categories).toContain('Complexity');
+  });
+
+  it('should map documentation tag to Clarity category', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['documentation'])] });
+    expect(out[0].categories).toContain('Clarity');
+  });
+
+  it('should map portability tag to Compatibility category', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['portability'])] });
+    expect(out[0].categories).toContain('Compatibility');
+  });
+
+  it('should map bestpractices tag to Style (verified without fallback masking)', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['bestpractices', 'security'])] });
+    expect(out[0].categories).toContain('Style');
+    expect(out[0].categories).toContain('Security');
+  });
+
+  it('should map codestyle tag to Style (verified without fallback masking)', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['codestyle', 'security'])] });
+    expect(out[0].categories).toContain('Style');
+    expect(out[0].categories).toContain('Security');
+  });
+
+  it('should map maintainability tag to Style (verified without fallback masking)', () => {
+    const out = convertToCodeClimate({ violations: [mkViolation(['maintainability', 'security'])] });
+    expect(out[0].categories).toContain('Style');
+    expect(out[0].categories).toContain('Security');
+  });
+});
+
+// ─── convertToSarif field completeness ───────────────────────────────────────
+
+describe('convertToSarif field completeness', () => {
+  const input: CodeAnalyzerOutput = {
+    violations: [
+      {
+        rule: 'MyRule',
+        engine: 'pmd',
+        severity: 3,
+        tags: ['security'],
+        primaryLocationIndex: 0,
+        message: 'Something is wrong',
+        locations: [{ file: 'a.cls', startLine: 5, endLine: 10 }],
+      },
+    ],
+  };
+
+  it('should include informationUri in the tool driver', () => {
+    const log = convertToSarif(input);
+    expect(log.runs[0].tool.driver.informationUri).toContain('salesforce');
+  });
+
+  it('should include message text in each result', () => {
+    const log = convertToSarif(input);
+    expect(log.runs[0].results?.[0].message?.text).toBe('Something is wrong');
+  });
+
+  it('should include issueType in result properties', () => {
+    const log = convertToSarif(input);
+    expect(log.runs[0].results?.[0].properties?.['issueType']).toBe('VULNERABILITY');
+  });
+
+  it('should include shortDescription and fullDescription in rules', () => {
+    const log = convertToSarif(input);
+    const rule = log.runs[0].tool.driver.rules?.[0];
+    expect((rule?.shortDescription as { text: string })?.text).toBe('Something is wrong');
+    expect((rule?.fullDescription as { text: string })?.text).toBe('Something is wrong');
+  });
+
+  it('should include analyzerSeverity in rule properties', () => {
+    const log = convertToSarif(input);
+    const rule = log.runs[0].tool.driver.rules?.[0];
+    expect(rule?.properties?.['analyzerSeverity']).toBe(3);
+  });
+
+  it('should use the plain tool name for the empty-violations run', () => {
+    const log = convertToSarif({ violations: [] });
+    expect(log.runs[0].tool.driver.name).toBe('Salesforce Code Analyzer');
+  });
+
+  it('should include informationUri in the empty-violations run', () => {
+    const log = convertToSarif({ violations: [] });
+    expect(log.runs[0].tool.driver.informationUri).toContain('salesforce');
+  });
+});
+
+// ─── convertToSonarQube rule field completeness ───────────────────────────────
+
+describe('convertToSonarQube rule field completeness', () => {
+  it('should reformat camelCase rule id into a human-readable name', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'AvoidOldSalesforceApiVersions',
+          engine: 'pmd',
+          severity: 2,
+          tags: ['security'],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [{ file: 'x.cls', startLine: 1 }],
+        },
+      ],
+    };
+    const output = convertToSonarQube(input);
+    expect(output.rules[0].name).toBe('Avoid Old Salesforce Api Versions');
+  });
+
+  it('should set cleanCodeAttribute to FORMATTED on every rule', () => {
+    const output = convertToSonarQube(mockAnalyzerInput);
+    expect(output.rules[0].cleanCodeAttribute).toBe('FORMATTED');
+  });
+
+  it('should populate impacts with softwareQuality entries at MEDIUM severity', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: ['security'],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [{ file: 'x.cls', startLine: 1 }],
+        },
+      ],
+    };
+    const output = convertToSonarQube(input);
+    expect(output.rules[0].impacts).toHaveLength(1);
+    expect(output.rules[0].impacts[0].softwareQuality).toBe('SECURITY');
+    expect(output.rules[0].impacts[0].severity).toBe('MEDIUM');
+  });
+});
+
+// ─── serializeGitHubAnnotations escaping completeness ────────────────────────
+
+describe('serializeGitHubAnnotations escaping completeness', () => {
+  it('should encode CR and LF in property values (file path)', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [{ file: 'force-app\r\nmain/X.cls', startLine: 1 }],
+        },
+      ],
+    };
+    const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
+    expect(out).toContain('force-app%0D%0Amain/X.cls');
+  });
+
+  it('should encode % in message bodies as %25', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'coverage is 80% today',
+          locations: [{ file: 'x.cls', startLine: 1 }],
+        },
+      ],
+    };
+    const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
+    expect(out).toContain('coverage is 80%25 today');
+  });
+});
+
+// ─── serializeJUnit failure content completeness ─────────────────────────────
+
+describe('serializeJUnit failure content completeness', () => {
+  it('should include the rule+engine+severity in the failure body text', () => {
+    const xml = serializeJUnit(convertToJUnit(mockAnalyzerInput));
+    expect(xml).toContain('AvoidOldSalesforceApiVersions (regex, severity high)');
+  });
+
+  it('should include the file:line in the failure body text', () => {
+    const xml = serializeJUnit(convertToJUnit(mockAnalyzerInput));
+    expect(xml).toContain('at force-app/main/default/classes/OldApi.cls:1');
+  });
+
+  it('should include the rule and message in the failure message attribute', () => {
+    const xml = serializeJUnit(convertToJUnit(mockAnalyzerInput));
+    expect(xml).toContain('AvoidOldSalesforceApiVersions: Avoid using a Salesforce API version');
+  });
+
+  it('should join multiple tags with comma-space in the body', () => {
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'R',
+          engine: 'pmd',
+          severity: 2,
+          tags: ['security', 'errorprone'],
+          primaryLocationIndex: 0,
+          message: 'm',
+          locations: [{ file: 'a.cls', startLine: 1 }],
+        },
+      ],
+    };
+    const report = convertToJUnit(input);
+    expect(report.testsuites[0].testcases[0].failure.body).toContain('tags: security, errorprone');
+  });
+
+  it('should separate body lines with newlines', () => {
+    const report = convertToJUnit(mockAnalyzerInput);
+    const body = report.testsuites[0].testcases[0].failure.body;
+    expect(body).toContain('AvoidOldSalesforceApiVersions (regex, severity high)\n');
   });
 });
