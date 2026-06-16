@@ -261,4 +261,4 @@ Found a bug or have an idea? Open an [issue](https://github.com/mcarvin8/sf-cat/
 
 ## License
 
-[MIT](https://raw.githubusercontent.com/mcarvin8/sf-cat/main/LICENSE.md)
+[MIT](LICENSE.md)
