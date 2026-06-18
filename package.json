@@ -1,6 +1,6 @@
 {
   "name": "sf-cat",
-  "description": "Transform Salesforce Code Analyzer reports into external code quality formats (SonarQube, SARIF, CodeClimate / GitLab Code Quality, JUnit XML, GitHub Actions workflow commands).",
+  "description": "Salesforce CLI (sf) plugin that converts Salesforce Code Analyzer reports to CI/CD-compatible formats: SonarQube, SARIF, CodeClimate/GitLab Code Quality, JUnit XML, and GitHub Actions annotations.",
   "version": "1.4.0",
   "dependencies": {
     "@oclif/core": "4.4.0",
@@ -47,6 +47,8 @@
     "sf-plugin",
     "sfdx",
     "sfdx-plugin",
+    "code-analyzer",
+    "salesforce-code-analyzer",
     "sonarqube",
     "sarif",
     "codeclimate",
@@ -56,11 +58,10 @@
     "pr-annotations",
     "code-scanning",
     "static-analysis",
+    "lint",
     "apex",
-    "converter",
     "transformer",
-    "code",
-    "quality"
+    "report"
   ],
   "license": "MIT",
   "oclif": {
