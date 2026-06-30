@@ -1,6 +1,6 @@
 {
   "name": "sf-cat",
-  "description": "Salesforce CLI plugin that converts Salesforce Code Analyzer reports to CI/CD-compatible formats.",
+  "description": "Convert Salesforce Code Analyzer reports to CI/CD-compatible formats",
   "version": "1.4.0",
   "dependencies": {
     "@oclif/core": "4.4.0",
