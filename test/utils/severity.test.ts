@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { countAtOrAboveThreshold } from '../../src/utils/severity.js';
-import { convertToSonarQube } from '../../src/utils/formats/sonar.js';
+import { describe, expect, it } from 'vitest';
 import { convertToSarif } from '../../src/utils/formats/sarif.js';
+import { convertToSonarQube } from '../../src/utils/formats/sonar.js';
+import { countAtOrAboveThreshold } from '../../src/utils/severity.js';
 import { CodeAnalyzerOutput } from '../../src/utils/types.js';
 
 describe('countAtOrAboveThreshold unit tests', () => {

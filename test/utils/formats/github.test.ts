@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { convertToGitHubAnnotations, serializeGitHubAnnotations } from '../../../src/utils/formats/github.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 import { mockAnalyzerInput } from '../fixtures.js';

@@ -1,5 +1,5 @@
+import { IssueType, mapIssueType, mapSonarSoftwareQualities, normalizeSeverity, sonarSeverity } from '../severity.js';
 import { CodeAnalyzerOutput } from '../types.js';
-import { mapIssueType, normalizeSeverity, sonarSeverity, IssueType, mapSonarSoftwareQualities } from '../severity.js';
 
 export type SonarQubeIssue = {
   ruleId: string;

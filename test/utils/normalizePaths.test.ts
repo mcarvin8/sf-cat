@@ -1,8 +1,8 @@
+import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { normalizePaths } from '../../src/utils/normalizePaths.js';
 import { CodeAnalyzerOutput } from '../../src/utils/types.js';
 

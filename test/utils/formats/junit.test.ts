@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { convertToJUnit, serializeJUnit } from '../../../src/utils/formats/junit.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 import { mockAnalyzerInput } from '../fixtures.js';

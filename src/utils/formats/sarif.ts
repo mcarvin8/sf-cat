@@ -1,6 +1,6 @@
-import type { Log, Result, ReportingDescriptor, Run } from 'sarif';
-import { CodeAnalyzerOutput, Violation } from '../types.js';
+import type { Log, ReportingDescriptor, Result, Run } from 'sarif';
 import { mapIssueType, normalizeSeverity, sarifLevel } from '../severity.js';
+import { CodeAnalyzerOutput, Violation } from '../types.js';
 
 const SARIF_SCHEMA = 'https://json.schemastore.org/sarif-2.1.0.json';
 const SARIF_VERSION = '2.1.0';

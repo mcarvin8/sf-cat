@@ -1,8 +1,8 @@
+import { readFile, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readFile, unlink, writeFile } from 'node:fs/promises';
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { convertToSonarQube, SonarQubeReport } from '../../../src/utils/formats/sonar.js';
 import { mapSonarSoftwareQualities } from '../../../src/utils/severity.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';

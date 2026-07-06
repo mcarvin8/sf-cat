@@ -1,5 +1,4 @@
-/* eslint-disable camelcase -- CodeClimate spec uses snake_case keys. */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { convertToCodeClimate } from '../../../src/utils/formats/codeclimate.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 import { mockAnalyzerInput } from '../fixtures.js';

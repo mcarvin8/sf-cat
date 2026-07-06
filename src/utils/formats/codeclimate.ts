@@ -1,6 +1,4 @@
-/* eslint-disable camelcase -- CodeClimate / GitLab Code Quality spec requires snake_case keys. */
 import { createHash } from 'node:crypto';
-import { CodeAnalyzerOutput, Violation } from '../types.js';
 import {
   CodeClimateCategory,
   CodeClimateSeverity,
@@ -8,6 +6,7 @@ import {
   mapCodeClimateCategories,
   normalizeSeverity,
 } from '../severity.js';
+import { CodeAnalyzerOutput, Violation } from '../types.js';
 
 /**
  * CodeClimate JSON / GitLab Code Quality issue.

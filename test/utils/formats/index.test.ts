@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { convertToGitHubAnnotations } from '../../../src/utils/formats/github.js';
 import {
-  STDOUT_SENTINEL,
-  formatters,
   defaultExtensions,
   defaultOutputFiles,
+  formatters,
   OUTPUT_FORMATS,
+  STDOUT_SENTINEL,
 } from '../../../src/utils/formats/index.js';
 import { convertToJUnit } from '../../../src/utils/formats/junit.js';
-import { convertToGitHubAnnotations } from '../../../src/utils/formats/github.js';
 import { mockAnalyzerInput } from '../fixtures.js';
 
 describe('formats/index module constants', () => {

@@ -1,6 +1,6 @@
 import XMLBuilder from 'fast-xml-builder';
-import { CodeAnalyzerOutput, Violation } from '../types.js';
 import { NormalizedSeverity, normalizeSeverity } from '../severity.js';
+import { CodeAnalyzerOutput, Violation } from '../types.js';
 
 export type JUnitFailure = {
   type: NormalizedSeverity;

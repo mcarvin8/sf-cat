@@ -1,5 +1,5 @@
-import { CodeAnalyzerOutput, Violation } from '../types.js';
 import { GitHubLevel, githubLevel, normalizeSeverity } from '../severity.js';
+import { CodeAnalyzerOutput, Violation } from '../types.js';
 
 export type GitHubAnnotation = {
   level: GitHubLevel;

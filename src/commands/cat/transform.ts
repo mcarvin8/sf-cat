@@ -1,19 +1,19 @@
 'use strict';
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
-import { CodeAnalyzerOutput, TransformResult } from '../../utils/types.js';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
+import { GitHubAnnotationReport } from '../../utils/formats/github.js';
 import {
+  defaultOutputFiles,
+  formatters,
   OUTPUT_FORMATS,
   OutputFormat,
   STDOUT_SENTINEL,
-  defaultOutputFiles,
-  formatters,
 } from '../../utils/formats/index.js';
-import { GitHubAnnotationReport } from '../../utils/formats/github.js';
-import { FAIL_ON_THRESHOLDS, FailOnThreshold, countAtOrAboveThreshold } from '../../utils/severity.js';
 import { normalizePaths } from '../../utils/normalizePaths.js';
+import { countAtOrAboveThreshold, FAIL_ON_THRESHOLDS, FailOnThreshold } from '../../utils/severity.js';
+import { CodeAnalyzerOutput, TransformResult } from '../../utils/types.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-cat', 'transformer.transform');
@@ -31,7 +31,6 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
     }),
     'output-file': Flags.file({
       summary: messages.getMessage('flags.output-file.summary'),
-      // eslint-disable-next-line sf-plugin/dash-o
       char: 'o',
     }),
     format: Flags.option({

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import type { Log } from 'sarif';
+import { describe, expect, it } from 'vitest';
 import { convertToSarif } from '../../../src/utils/formats/sarif.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 import { mockAnalyzerInput } from '../fixtures.js';

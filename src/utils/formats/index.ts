@@ -1,9 +1,9 @@
 import { CodeAnalyzerOutput } from '../types.js';
-import { convertToSonarQube } from './sonar.js';
-import { convertToSarif } from './sarif.js';
 import { convertToCodeClimate } from './codeclimate.js';
-import { convertToJUnit, serializeJUnit } from './junit.js';
 import { convertToGitHubAnnotations, serializeGitHubAnnotations } from './github.js';
+import { convertToJUnit, serializeJUnit } from './junit.js';
+import { convertToSarif } from './sarif.js';
+import { convertToSonarQube } from './sonar.js';
 
 export const OUTPUT_FORMATS = ['sonar', 'sarif', 'codeclimate', 'junit', 'github'] as const;
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];

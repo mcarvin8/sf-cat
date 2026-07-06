@@ -1,14 +1,13 @@
-/* eslint-disable camelcase -- CodeClimate spec uses snake_case keys. */
 'use strict';
 
-import { readFile, writeFile, unlink } from 'node:fs/promises';
+import { readFile, unlink, writeFile } from 'node:fs/promises';
 
 import { execCmd, TestSession } from '@salesforce/cli-plugins-testkit';
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import type { Log } from 'sarif';
-import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { SonarQubeReport } from '../../../src/utils/formats/sonar.js';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { CodeClimateReport } from '../../../src/utils/formats/codeclimate.js';
+import { SonarQubeReport } from '../../../src/utils/formats/sonar.js';
+import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
 
 const mockAnalyzerInput: CodeAnalyzerOutput = {
   violations: [
