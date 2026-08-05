@@ -9,6 +9,7 @@
 
 A Salesforce CLI plugin that converts **Salesforce Code Analyzer** output into formats consumable by external code quality platforms — SonarQube, GitHub Code Scanning, Azure DevOps, GitLab, and any other SARIF-aware tool.
 
+- [Requirements](#requirements)
 - [Install](#install)
 - [How It Works](#how-it-works)
 - [Quick Start](#quick-start)
@@ -24,13 +25,17 @@ A Salesforce CLI plugin that converts **Salesforce Code Analyzer** output into f
 - [Issues](#issues)
 - [License](#license)
 
+## Requirements
+
+- Salesforce CLI (`sf`)
+- **Salesforce Code Analyzer v5** (`sf code-analyzer`)
+- Node.js **22.19 or later**
+
 ## Install
 
 ```bash
 sf plugins install sf-cat@latest
 ```
-
-Requires Salesforce CLI with **Code Analyzer v5** (`sf code-analyzer`).
 
 ## How It Works
 
