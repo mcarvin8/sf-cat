@@ -1,7 +1,7 @@
 {
   "name": "sf-cat",
   "description": "Convert Salesforce Code Analyzer reports to CI/CD-compatible formats",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "dependencies": {
     "@oclif/core": "4.13.3",
     "@salesforce/core": "9.1.0",
