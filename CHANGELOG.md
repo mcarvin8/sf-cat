@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/mcarvin8/sf-cat/compare/v1.4.0...v2.0.0) (2026-08-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* **engines:** minimum supported node version raised from 20.0.0 to 22.19.0.
+
+### Bug Fixes
+
+* **engines:** raise node engine floor to 22.19.0 to match dep tree ([#36](https://github.com/mcarvin8/sf-cat/issues/36)) ([8ae66fd](https://github.com/mcarvin8/sf-cat/commit/8ae66fdca12aed85a40b05637c857aea51ca60d6))
+
 ## [1.4.0](https://github.com/mcarvin8/sf-cat/compare/v1.3.2...v1.4.0) (2026-06-02)
 
 
