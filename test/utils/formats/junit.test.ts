@@ -166,21 +166,22 @@ describe('serializeJUnit unit tests', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
         {
-          rule: 'Rule<&">',
+          rule: 'Rule<&">\'',
           engine: 'pmd',
           severity: 2,
           tags: ['a&b'],
           primaryLocationIndex: 0,
-          message: 'a < b && c > d "quoted"',
+          message: 'a < b && c > d "quoted" it\'s',
           locations: [{ file: 'path/with "quote"&amp.cls', startLine: 1 }],
         },
       ],
     };
     const xml = serializeJUnit(convertToJUnit(input));
-    expect(xml).not.toContain('Rule<&">');
-    expect(xml).toContain('Rule&lt;&amp;&quot;&gt;');
+    expect(xml).not.toContain('Rule<&">\'');
+    expect(xml).toContain('Rule&lt;&amp;&quot;&gt;&apos;');
     expect(xml).toContain('a &lt; b &amp;&amp; c &gt; d');
     expect(xml).toContain('path/with &quot;quote&quot;&amp;amp.cls');
+    expect(xml).toContain('it&apos;s');
   });
 
   it('should include the rule+engine+severity in the failure body text', () => {
