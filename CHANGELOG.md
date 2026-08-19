@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/mcarvin8/sf-cat/compare/v2.0.0...v2.0.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* **junit:** replace fast-xml-builder with in-house XML writer ([#38](https://github.com/mcarvin8/sf-cat/issues/38)) ([fbf5f29](https://github.com/mcarvin8/sf-cat/commit/fbf5f290039f42a9beb389c2fba6da945abcc178))
+
 ## [2.0.0](https://github.com/mcarvin8/sf-cat/compare/v1.4.0...v2.0.0) (2026-08-05)
 
 
