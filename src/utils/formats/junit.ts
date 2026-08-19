@@ -1,4 +1,3 @@
-import XMLBuilder from 'fast-xml-builder';
 import { NormalizedSeverity, normalizeSeverity } from '../severity.js';
 import { CodeAnalyzerOutput, Violation } from '../types.js';
 
@@ -92,36 +91,59 @@ export function convertToJUnit(input: CodeAnalyzerOutput): JUnitReport {
   };
 }
 
-const xmlBuilder = new XMLBuilder({
-  attributeNamePrefix: '@_',
-  ignoreAttributes: false,
-  format: true,
-  indentBy: '  ',
-  processEntities: true,
-  suppressEmptyNode: false,
-});
+function escapeXml(value: string | number): string {
+  return String(value).replace(/[&<>"']/g, (c) => {
+    switch (c) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      default:
+        return '&apos;';
+    }
+  });
+}
+
+function attr(name: string, value: string | number): string {
+  return ` ${name}="${escapeXml(value)}"`;
+}
+
+function buildFailureXml(failure: JUnitFailure, indent: string): string {
+  return `${indent}<failure${attr('type', failure.type)}${attr('message', failure.message)}>${escapeXml(failure.body)}</failure>`;
+}
+
+function buildTestcaseXml(tc: JUnitTestcase, indent: string): string {
+  const inner = `${indent}  `;
+  return [
+    `${indent}<testcase${attr('classname', tc.classname)}${attr('name', tc.name)}>`,
+    buildFailureXml(tc.failure, inner),
+    `${indent}</testcase>`,
+  ].join('\n');
+}
+
+function buildTestsuiteXml(ts: JUnitTestsuite, indent: string): string {
+  const inner = `${indent}  `;
+  const lines = [
+    `${indent}<testsuite${attr('name', ts.name)}${attr('tests', ts.tests)}${attr('failures', ts.failures)}>`,
+  ];
+  for (const tc of ts.testcases) {
+    lines.push(buildTestcaseXml(tc, inner));
+  }
+  lines.push(`${indent}</testsuite>`);
+  return lines.join('\n');
+}
 
 export function serializeJUnit(report: JUnitReport): string {
-  const tree = {
-    testsuites: {
-      '@_name': report.name,
-      '@_tests': report.tests,
-      '@_failures': report.failures,
-      testsuite: report.testsuites.map((ts) => ({
-        '@_name': ts.name,
-        '@_tests': ts.tests,
-        '@_failures': ts.failures,
-        testcase: ts.testcases.map((tc) => ({
-          '@_classname': tc.classname,
-          '@_name': tc.name,
-          failure: {
-            '@_type': tc.failure.type,
-            '@_message': tc.failure.message,
-            '#text': tc.failure.body,
-          },
-        })),
-      })),
-    },
-  };
-  return `<?xml version="1.0" encoding="UTF-8"?>\n${xmlBuilder.build(tree)}`;
+  const lines = [
+    `<testsuites${attr('name', report.name)}${attr('tests', report.tests)}${attr('failures', report.failures)}>`,
+  ];
+  for (const ts of report.testsuites) {
+    lines.push(buildTestsuiteXml(ts, '  '));
+  }
+  lines.push('</testsuites>');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${lines.join('\n')}\n`;
 }
