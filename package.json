@@ -91,6 +91,7 @@
     "postpack": "shx rm -f oclif.manifest.json oclif.lock",
     "prepack": "wireit",
     "prepare": "husky",
+    "readme": "wireit",
     "test": "wireit",
     "test:mutation": "wireit",
     "test:mutation:incremental": "wireit",
@@ -195,6 +196,21 @@
       "files": [
         "src/commands/cat/transform.ts",
         "messages/transformer.transform.md",
+        "README.md"
+      ],
+      "dependencies": [
+        "build"
+      ],
+      "output": [
+        "README.md"
+      ],
+      "clean": false
+    },
+    "readme": {
+      "command": "oclif readme",
+      "files": [
+        "src/commands/**/*.ts",
+        "messages/*.md",
         "README.md"
       ],
       "dependencies": [

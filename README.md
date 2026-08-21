@@ -234,31 +234,78 @@ sf-cat strips all column values before output. Line-level highlighting is preser
 
 ## Command Reference
 
-### `sf cat transform`
+<!-- commands -->
+* [`sf cat transform`](#sf-cat-transform)
 
-| Flag                 | Short | Description                                                                                                                                                           |
-| -------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--input-file`       | `-i`  | Path to the JSON file from Salesforce Code Analyzer (required)                                                                                                        |
-| `--format`           | `-f`  | Output format: `sonar` (default), `sarif`, `codeclimate`, `junit`, or `github`                                                                                        |
-| `--output-file`      | `-o`  | Path for converted output. Defaults: `output.json` (sonar), `output.sarif` (sarif), `gl-code-quality-report.json` (codeclimate), `junit.xml` (junit), stdout (github) |
-| `--fail-on`          |       | Exit non-zero when any violation is at this severity or higher: `critical`, `high`, `moderate`, `low`, `info`, or `never` (default)                                   |
-| `--strip-prefix`     |       | Strip a leading path prefix from every violation file path before formatting                                                                                          |
-| `--project-relative` |       | Make every violation file path relative to the SFDX project root (`sfdx-project.json` location)                                                                       |
-| `--max-annotations`  |       | Maximum annotations to emit for `--format github`. Default: `50`. Prints a warning and truncates when total exceeds this limit.                                       |
+## `sf cat transform`
 
-**Examples:**
+Transform Salesforce Code Analyzer results into a code quality format such as SonarQube, SARIF, CodeClimate / GitLab Code Quality, JUnit XML, or GitHub Actions workflow commands.
 
-```bash
-sf cat transform -i "analyzer.json" -o "sonar.json"
-sf cat transform -i "analyzer.json" -f sarif
-sf cat transform -i "analyzer.json" -f sarif -o "results.sarif"
-sf cat transform -i "analyzer.json" -f codeclimate
-sf cat transform -i "analyzer.json" -f junit
-sf cat transform -i "analyzer.json" -f github
-sf cat transform -i "analyzer.json" --fail-on high
-sf cat transform -i "analyzer.json" -f sarif --project-relative
-sf cat transform -i "analyzer.json" -f sarif --strip-prefix "/home/runner/work/myrepo/myrepo/"
 ```
+USAGE
+  $ sf cat transform -i <value> [--json] [--flags-dir <value>] [-o <value>] [-f
+    sonar|sarif|codeclimate|junit|github] [--fail-on critical|high|moderate|low|info|never] [--strip-prefix <value> |
+    --project-relative] [--max-annotations <value>]
+
+FLAGS
+  -f, --format=<option>          [default: sonar] Output format to produce. One of: `sonar` (SonarQube generic issue
+                                 data), `sarif` (SARIF v2.1.0), `codeclimate` (CodeClimate / GitLab Code Quality),
+                                 `junit` (JUnit XML), or `github` (GitHub Actions workflow commands).
+                                 <options: sonar|sarif|codeclimate|junit|github>
+  -i, --input-file=<value>       (required) Path to the JSON file created by the Salesforce Code Analyzer plugin.
+  -o, --output-file=<value>      Path to the output created by this plugin. Defaults to `output.json` for `sonar`,
+                                 `output.sarif` for `sarif`, `gl-code-quality-report.json` for `codeclimate`,
+                                 `junit.xml` for `junit`, and stdout for `github`.
+      --fail-on=<option>         [default: never] Exit with code 1 when any violation has the given severity or higher.
+                                 One of `critical`, `high`, `moderate`, `low`, `info`, or `never` (default). The output
+                                 file is still written before the failing exit, so CI artifact uploads in later steps
+                                 still see it.
+                                 <options: critical|high|moderate|low|info|never>
+      --max-annotations=<value>  [default: 50] Maximum number of GitHub Actions workflow command annotations to emit
+                                 (only applies to `--format github`). GitHub silently drops annotations beyond its
+                                 per-step cap; this flag lets you control how many are emitted and surfaces a warning
+                                 when the total exceeds the limit. Defaults to 50.
+      --project-relative         Make every violation file path relative to the Salesforce DX project root (resolved by
+                                 walking upward from the current directory until an `sfdx-project.json` is found).
+                                 Mutually exclusive with `--strip-prefix`.
+      --strip-prefix=<value>     Strip a leading prefix from every violation file path before formatting (for example,
+                                 `/home/runner/work/repo/repo/`). Useful when CI runners produce absolute paths that
+                                 break GitHub Code Scanning anchors or CodeClimate fingerprints. Mutually exclusive with
+                                 `--project-relative`.
+
+GLOBAL FLAGS
+  --flags-dir=<value>  Import flag values from a directory.
+  --json               Format output as json.
+
+DESCRIPTION
+  Transform Salesforce Code Analyzer results into a code quality format such as SonarQube, SARIF, CodeClimate / GitLab
+  Code Quality, JUnit XML, or GitHub Actions workflow commands.
+
+  Transform Salesforce Code Analyzer results into a code quality format consumable by external tools. Supported formats:
+  SonarQube generic issue data, SARIF v2.1.0 (GitHub Code Scanning, Azure DevOps, GitLab, etc.), CodeClimate JSON
+  (GitLab Code Quality, CodeClimate engines), JUnit XML (Jenkins, GitHub Actions test reporters, GitLab, Azure DevOps,
+  CircleCI, Bitbucket, etc.), and GitHub Actions workflow commands (inline PR annotations on GitHub without GHAS).
+
+EXAMPLES
+  `sf cat transform -i "sf-code-analyzer.json" -o "sonar.json"`
+
+  `sf cat transform -i "sf-code-analyzer.json" -f sarif`
+
+  `sf cat transform -i "sf-code-analyzer.json" -f codeclimate`
+
+  `sf cat transform -i "sf-code-analyzer.json" -f junit`
+
+  `sf cat transform -i "sf-code-analyzer.json" -f github`
+
+  `sf cat transform -i "sf-code-analyzer.json" -f sarif -o "results.sarif"`
+
+  `sf cat transform -i "sf-code-analyzer.json" --fail-on high`
+
+  `sf cat transform -i "sf-code-analyzer.json" --project-relative`
+```
+
+_See code: [src/commands/cat/transform.ts](https://github.com/mcarvin8/sf-cat/blob/v2.0.1/src/commands/cat/transform.ts)_
+<!-- commandsstop -->
 
 ## Issues
 
