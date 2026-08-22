@@ -1,5 +1,5 @@
 name: 'SF Cat'
-description: 'Transform Salesforce Code Analyzer JSON output into SonarQube, SARIF, CodeClimate, JUnit, or GitHub Actions annotation formats.'
+description: 'Transforms Salesforce Code Analyzer output into formats consumable by external code quality platforms.'
 author: 'Matt Carvin'
 branding:
   icon: 'check-square'
