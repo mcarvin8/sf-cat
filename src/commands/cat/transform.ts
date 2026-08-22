@@ -1,19 +1,11 @@
 'use strict';
 
-import { readFile, writeFile } from 'node:fs/promises';
 import { Messages } from '@salesforce/core';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
-import { GitHubAnnotationReport } from '../../utils/formats/github.js';
-import {
-  defaultOutputFiles,
-  formatters,
-  OUTPUT_FORMATS,
-  OutputFormat,
-  STDOUT_SENTINEL,
-} from '../../utils/formats/index.js';
-import { normalizePaths } from '../../utils/normalizePaths.js';
-import { countAtOrAboveThreshold, FAIL_ON_THRESHOLDS, FailOnThreshold } from '../../utils/severity.js';
-import { CodeAnalyzerOutput, TransformResult } from '../../utils/types.js';
+import { runTransform } from '../../core/runTransform.js';
+import { OUTPUT_FORMATS, OutputFormat } from '../../utils/formats/index.js';
+import { FAIL_ON_THRESHOLDS, FailOnThreshold } from '../../utils/severity.js';
+import { TransformResult } from '../../utils/types.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-cat', 'transformer.transform');
@@ -62,52 +54,22 @@ export default class TransformerTransform extends SfCommand<TransformResult> {
 
   public async run(): Promise<TransformResult> {
     const { flags } = await this.parse(TransformerTransform);
-    const format = flags.format;
-    const outputPath = flags['output-file'] ?? defaultOutputFiles[format];
 
-    const raw = await readFile(flags['input-file'], 'utf8');
-    const parsed = JSON.parse(raw) as CodeAnalyzerOutput;
-
-    const input = normalizePaths(parsed, {
+    const result = await runTransform({
+      inputFile: flags['input-file'],
+      outputFile: flags['output-file'],
+      format: flags.format,
+      failOn: flags['fail-on'],
       stripPrefix: flags['strip-prefix'],
       projectRelative: flags['project-relative'],
+      maxAnnotations: flags['max-annotations'],
+      warn: this.warn.bind(this),
     });
 
-    const handler = formatters[format];
-    let converted = handler.convert(input);
-
-    if (format === 'github') {
-      const annotations = converted as GitHubAnnotationReport;
-      const maxAnnotations = flags['max-annotations'];
-      if (annotations.length > maxAnnotations) {
-        const dropped = annotations.length - maxAnnotations;
-        this.warn(
-          `${annotations.length} annotations generated; only the first ${maxAnnotations} will be emitted (${dropped} dropped). GitHub silently drops annotations beyond its per-step cap. Increase --max-annotations or use --format sarif/junit for a full artifact.`,
-        );
-        converted = annotations.slice(0, maxAnnotations);
-      }
-    }
-
-    const serialized = handler.serialize(converted);
-
-    if (outputPath === STDOUT_SENTINEL) {
-      process.stdout.write(serialized);
-    } else {
-      await writeFile(outputPath, serialized);
-    }
-
-    const failures = countAtOrAboveThreshold(input.violations, flags['fail-on']);
-    if (failures > 0) {
+    if (result.failures > 0) {
       process.exitCode = 1;
-      this.warn(
-        `Found ${failures} violation${failures === 1 ? '' : 's'} at severity '${flags['fail-on']}' or higher; exiting with code 1.`,
-      );
     }
 
-    return {
-      path: outputPath,
-      violations: input.violations.length,
-      failures,
-    };
+    return result;
   }
 }
