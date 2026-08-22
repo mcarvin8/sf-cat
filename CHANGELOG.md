@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/mcarvin8/sf-cat/compare/v2.0.1...v2.1.0) (2026-08-22)
+
+
+### Features
+
+* add native GitHub Action for sf-cat transform ([#40](https://github.com/mcarvin8/sf-cat/issues/40)) ([59a1e70](https://github.com/mcarvin8/sf-cat/commit/59a1e70238439f81774a5dffa6d01d3cb989dea3))
+
 ## [2.0.1](https://github.com/mcarvin8/sf-cat/compare/v2.0.0...v2.0.1) (2026-08-19)
 
 
