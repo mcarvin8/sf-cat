@@ -1,0 +1,65 @@
+name: 'SF Cat'
+description: 'Transform Salesforce Code Analyzer JSON output into SonarQube, SARIF, CodeClimate, JUnit, or GitHub Actions annotation formats.'
+author: 'Matt Carvin'
+branding:
+  icon: 'check-square'
+  color: 'blue'
+
+inputs:
+  input-file:
+    description: 'Path to the JSON file created by the Salesforce Code Analyzer plugin.'
+    required: true
+  output-file:
+    description: >-
+      Path to the output file this action creates. Defaults to `output.json` for `sonar`,
+      `output.sarif` for `sarif`, `gl-code-quality-report.json` for `codeclimate`, `junit.xml`
+      for `junit`, and stdout for `github`.
+    required: false
+  format:
+    description: >-
+      Output format to produce. One of: `sonar` (SonarQube generic issue data), `sarif` (SARIF
+      v2.1.0), `codeclimate` (CodeClimate / GitLab Code Quality), `junit` (JUnit XML), or `github`
+      (GitHub Actions workflow commands).
+    required: false
+    default: 'sonar'
+  fail-on:
+    description: >-
+      Fail the action when any violation has the given severity or higher. One of `critical`,
+      `high`, `moderate`, `low`, `info`, or `never` (default). The output file is still written
+      before the action fails.
+    required: false
+    default: 'never'
+  strip-prefix:
+    description: >-
+      Strip a leading prefix from every violation file path before formatting (for example,
+      `/home/runner/work/repo/repo/`). Mutually exclusive with `project-relative`.
+    required: false
+  project-relative:
+    description: >-
+      Make every violation file path relative to the Salesforce DX project root (resolved by
+      walking upward from the current directory until an `sfdx-project.json` is found). Mutually
+      exclusive with `strip-prefix`.
+    required: false
+    default: 'false'
+  max-annotations:
+    description: >-
+      Maximum number of GitHub Actions workflow command annotations to emit (only applies to
+      `format: github`). GitHub silently drops annotations beyond its per-step cap.
+    required: false
+    default: '50'
+
+outputs:
+  output-path:
+    description: >-
+      Path to the transformed report. Empty when `format: github` and `output-file` is not set,
+      since the report is written to stdout as workflow command annotations instead.
+  violations:
+    description: 'Total number of violations in the input report.'
+  failures:
+    description: "Number of violations at or above the 'fail-on' severity threshold."
+  warnings:
+    description: 'Newline-separated list of warnings emitted while transforming, if any.'
+
+runs:
+  using: 'node24'
+  main: 'dist/action/index.cjs'

@@ -1,0 +1,140 @@
+# Manual smoke test: exercises the Action end to end on real GitHub Actions
+# infra using the repo's own test/samples fixture.
+#
+# Two sources, deliberately not the same:
+# - pull_request: uses `./` (this checkout's actual action.yml/dist/action) -
+#   validates what's about to be merged before it ever reaches @v2.
+# - workflow_dispatch: uses `@v2` (the live published tag) - an on-demand
+#   check that what's actually public still works, run manually post-release.
+name: Smoke test (published Action)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/smoke-test-action.yml'
+      - 'action.yml'
+      - 'dist/action/**'
+      - 'src/action/**'
+      - 'src/core/**'
+      - 'src/utils/**'
+      - 'test/samples/**'
+
+permissions:
+  contents: read
+
+jobs:
+  success-path-local:
+    name: Success path (local checkout)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Transform Code Analyzer output
+        id: transform
+        uses: ./
+        with:
+          input-file: test/samples/analyzer-output.json
+          output-file: sonar.json
+
+      - name: Show outputs and report
+        run: |
+          echo "output-path: ${{ steps.transform.outputs.output-path }}"
+          echo "violations: ${{ steps.transform.outputs.violations }}"
+          echo "failures: ${{ steps.transform.outputs.failures }}"
+          echo "---"
+          cat sonar.json
+
+  fail-on-failure-path-local:
+    name: fail-on failure path (local checkout)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Transform Code Analyzer output (expected to fail on the fail-on gate)
+        id: transform
+        continue-on-error: true
+        uses: ./
+        with:
+          input-file: test/samples/analyzer-output.json
+          output-file: sonar.json
+          fail-on: 'high'
+
+      - name: Confirm the step actually failed
+        run: |
+          if [ "${{ steps.transform.outcome }}" != "failure" ]; then
+            echo "Expected the fail-on step to fail (outcome was '${{ steps.transform.outcome }}')."
+            exit 1
+          fi
+          echo "Confirmed: fail-on correctly failed the step."
+
+      - name: Confirm outputs are still set despite the failure
+        run: |
+          if [ "${{ steps.transform.outputs.failures }}" != "1" ]; then
+            echo "Expected 1 failure, got '${{ steps.transform.outputs.failures }}'."
+            exit 1
+          fi
+          echo "failures: ${{ steps.transform.outputs.failures }}"
+
+      - name: Confirm the output file was still written before the failing exit
+        run: cat sonar.json
+
+  success-path-published:
+    name: Success path (published @v2)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Transform Code Analyzer output
+        id: transform
+        uses: mcarvin8/sf-cat@v2
+        with:
+          input-file: test/samples/analyzer-output.json
+          output-file: sonar.json
+
+      - name: Show outputs and report
+        run: |
+          echo "output-path: ${{ steps.transform.outputs.output-path }}"
+          echo "violations: ${{ steps.transform.outputs.violations }}"
+          echo "failures: ${{ steps.transform.outputs.failures }}"
+          echo "---"
+          cat sonar.json
+
+  fail-on-failure-path-published:
+    name: fail-on failure path (published @v2)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Transform Code Analyzer output (expected to fail on the fail-on gate)
+        id: transform
+        continue-on-error: true
+        uses: mcarvin8/sf-cat@v2
+        with:
+          input-file: test/samples/analyzer-output.json
+          output-file: sonar.json
+          fail-on: 'high'
+
+      - name: Confirm the step actually failed
+        run: |
+          if [ "${{ steps.transform.outcome }}" != "failure" ]; then
+            echo "Expected the fail-on step to fail (outcome was '${{ steps.transform.outcome }}')."
+            exit 1
+          fi
+          echo "Confirmed: fail-on correctly failed the step."
+
+      - name: Confirm outputs are still set despite the failure
+        run: |
+          if [ "${{ steps.transform.outputs.failures }}" != "1" ]; then
+            echo "Expected 1 failure, got '${{ steps.transform.outputs.failures }}'."
+            exit 1
+          fi
+          echo "failures: ${{ steps.transform.outputs.failures }}"

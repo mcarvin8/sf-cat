@@ -7,10 +7,11 @@
 [![codecov](https://codecov.io/gh/mcarvin8/sf-cat/graph/badge.svg?token=ENF0XXJGEM)](https://codecov.io/gh/mcarvin8/sf-cat)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fmcarvin8%2Fsf-cat%2Fmain)](https://dashboard.stryker-mutator.io/reports/github.com/mcarvin8/sf-cat/main)
 
-A Salesforce CLI plugin that converts **Salesforce Code Analyzer** output into formats consumable by external code quality platforms — SonarQube, GitHub Code Scanning, Azure DevOps, GitLab, and any other SARIF-aware tool.
+Converts **Salesforce Code Analyzer** output into formats consumable by external code quality platforms — SonarQube, GitHub Code Scanning, Azure DevOps, GitLab, and any other SARIF-aware tool. Available as a **Salesforce CLI plugin** for any provider, and as a **native GitHub Action** for GitHub Actions users who want to skip installing the CLI just to run the transform step.
 
 - [Requirements](#requirements)
 - [Install](#install)
+- [GitHub Action](#github-action)
 - [How It Works](#how-it-works)
 - [Quick Start](#quick-start)
   - [SonarQube](#sonarqube)
@@ -35,6 +36,66 @@ A Salesforce CLI plugin that converts **Salesforce Code Analyzer** output into f
 
 ```bash
 sf plugins install sf-cat@latest
+```
+
+## GitHub Action
+
+For GitHub Actions, this is also available as a native Action - no Salesforce CLI or plugin install required. It complements the [Salesforce Code Analyzer GitHub Action](https://github.com/forcedotcom/run-code-analyzer): run Code Analyzer first, then transform its JSON output with this Action:
+
+```yaml
+- name: Transform Code Analyzer output
+  id: transform
+  uses: mcarvin8/sf-cat@v2
+  with:
+    input-file: analyzer.json
+    format: sarif
+    output-file: results.sarif
+```
+
+### Inputs
+
+| Input               | Description                                                                     | Required | Default  |
+| -------------------- | -------------------------------------------------------------------------------- | -------- | -------- |
+| `input-file`          | Path to the JSON file created by the Salesforce Code Analyzer plugin.            | Yes      |          |
+| `output-file`         | Path to the output file this action creates. Defaults per `format` (see [Command Reference](#command-reference)). | No       |          |
+| `format`              | Output format to produce: `sonar`, `sarif`, `codeclimate`, `junit`, or `github`. | No       | `sonar`  |
+| `fail-on`             | Fail the action when any violation has the given severity or higher.             | No       | `never`  |
+| `strip-prefix`        | Strip a leading prefix from every violation file path. Mutually exclusive with `project-relative`. | No       |          |
+| `project-relative`    | Make every violation file path relative to the Salesforce DX project root. Mutually exclusive with `strip-prefix`. | No       | `false`  |
+| `max-annotations`     | Maximum number of `format: github` annotations to emit.                          | No       | `50`     |
+
+### Outputs
+
+| Output        | Description                                                          |
+| -------------- | ---------------------------------------------------------------------- |
+| `output-path`  | Path to the transformed report (empty when `format: github` writes to stdout instead of a file). |
+| `violations`   | Total number of violations in the input report.                      |
+| `failures`     | Number of violations at or above the `fail-on` severity threshold.   |
+| `warnings`     | Newline-separated list of warnings emitted while transforming, if any. |
+
+### Example: fail the build on high-severity findings
+
+```yaml
+- name: Run Code Analyzer
+  uses: forcedotcom/run-code-analyzer@v1
+  with:
+    run-command: run
+    run-arguments: --workspace ./force-app/main/default/ --rule-selector Recommended --output-file analyzer.json
+
+- name: Transform to SARIF and fail on high severity
+  id: transform
+  uses: mcarvin8/sf-cat@v2
+  with:
+    input-file: analyzer.json
+    format: sarif
+    output-file: results.sarif
+    fail-on: high
+
+- name: Upload SARIF
+  if: always()
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: results.sarif
 ```
 
 ## How It Works
@@ -181,6 +242,8 @@ artifacts:
 ### GitHub Actions workflow commands (inline PR annotations, no GHAS)
 
 Use this when you want inline PR annotations on GitHub but don't have GitHub Advanced Security (which `upload-sarif` requires on private repos). The plugin prints `::error file=...,line=...::message` lines to stdout; the GitHub Actions runner renders them as annotations on the PR Files Changed view automatically.
+
+> On GitHub Actions, skip the plugin install with the [native Action](#github-action) instead: `uses: mcarvin8/sf-cat@v2` with `format: github`.
 
 ```yaml
 jobs:
