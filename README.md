@@ -24,7 +24,7 @@ Use `sf-cat` as either a **native GitHub Action** or a **Salesforce CLI plugin**
 - [Failing the Build on High-Severity Findings](#failing-the-build-on-high-severity-findings)
 - [Path Normalization](#path-normalization)
 - [Column Data Handling](#column-data-handling)
-- [Command Reference](#command-reference)
+- [CLI Command Reference](#cli-command-reference)
 - [Issues](#issues)
 - [License](#license)
 
@@ -406,7 +406,7 @@ Salesforce Code Analyzer can report `startColumn` and `endColumn` values that ex
 
 Line-level locations are preserved, while potentially invalid column data is omitted so downstream platforms can reliably consume the transformed report.
 
-## Command Reference
+## CLI Command Reference
 
 <!-- commands -->
 * [`sf cat transform`](#sf-cat-transform)
