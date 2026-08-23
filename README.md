@@ -10,20 +10,11 @@
 
 Converts **Salesforce Code Analyzer** output into formats consumable by external code quality platforms — SonarQube, GitHub Code Scanning, Azure DevOps, GitLab, Jenkins, and other SARIF-, CodeClimate-, or JUnit-compatible tools.
 
-Use `sf-cat` as either:
-
-- a **native GitHub Action** — no Salesforce CLI or `sf-cat` plugin installation required for the transform step; or
-- a **Salesforce CLI plugin** — for GitHub Actions, GitLab CI, Azure DevOps, Jenkins, Bitbucket Pipelines, local development, and other environments.
+Use `sf-cat` as either a **native GitHub Action** or a **Salesforce CLI plugin**.
 
 - [How It Works](#how-it-works)
 - [GitHub Action](#github-action)
-  - [Inputs](#inputs)
-  - [Outputs](#outputs)
-  - [Fail the build on high-severity findings](#fail-the-build-on-high-severity-findings)
 - [Salesforce CLI Plugin](#salesforce-cli-plugin)
-  - [Requirements](#requirements)
-  - [Install](#install)
-  - [Quick Start](#quick-start)
 - [Output Formats](#output-formats)
   - [SonarQube](#sonarqube)
   - [SARIF (GitHub Code Scanning, Azure DevOps, GitLab, ...)](#sarif-github-code-scanning-azure-devops-gitlab-)
