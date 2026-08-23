@@ -41,9 +41,28 @@ sf plugins install sf-cat@latest
 
 ## GitHub Action
 
-For GitHub Actions, this is also available as a native Action - no Salesforce CLI or plugin install required. It complements the [Salesforce Code Analyzer GitHub Action](https://github.com/forcedotcom/run-code-analyzer): run Code Analyzer first, then transform its JSON output with this Action:
+`sf-cat` is also available as a native GitHub Action. **Running `sf-cat` this way does not require the Salesforce CLI or an `sf-cat` plugin installation** — the Action includes everything needed to transform an existing Salesforce Code Analyzer JSON report.
+
+This differs from the [Salesforce Code Analyzer GitHub Action](https://github.com/marketplace/actions/run-salesforce-code-analyzer), which requires the Salesforce CLI and the `code-analyzer` CLI plugin to be installed on the runner before the Action runs.
+
+A typical workflow is:
+
+1. Install the Salesforce CLI and Salesforce Code Analyzer v5 plugin.
+2. Run Salesforce Code Analyzer to produce a JSON report.
+3. Pass that report to the `sf-cat` Action — no additional Salesforce CLI or plugin installation is required for this step.
 
 ```yaml
+- name: Install Salesforce CLI
+  run: npm install -g @salesforce/cli@latest
+
+- name: Install Salesforce Code Analyzer
+  run: sf plugins install code-analyzer@latest
+
+- name: Run Salesforce Code Analyzer
+  uses: forcedotcom/run-code-analyzer@v2
+  with:
+    run-arguments: --workspace ./force-app/main/default/ --rule-selector Recommended --output-file analyzer.json
+
 - name: Transform Code Analyzer output
   id: transform
   uses: mcarvin8/sf-cat@v2
@@ -55,49 +74,24 @@ For GitHub Actions, this is also available as a native Action - no Salesforce CL
 
 ### Inputs
 
-| Input               | Description                                                                     | Required | Default  |
-| -------------------- | -------------------------------------------------------------------------------- | -------- | -------- |
-| `input-file`          | Path to the JSON file created by the Salesforce Code Analyzer plugin.            | Yes      |          |
-| `output-file`         | Path to the output file this action creates. Defaults per `format` (see [Command Reference](#command-reference)). | No       |          |
-| `format`              | Output format to produce: `sonar`, `sarif`, `codeclimate`, `junit`, or `github`. | No       | `sonar`  |
-| `fail-on`             | Fail the action when any violation has the given severity or higher.             | No       | `never`  |
-| `strip-prefix`        | Strip a leading prefix from every violation file path. Mutually exclusive with `project-relative`. | No       |          |
-| `project-relative`    | Make every violation file path relative to the Salesforce DX project root. Mutually exclusive with `strip-prefix`. | No       | `false`  |
-| `max-annotations`     | Maximum number of `format: github` annotations to emit.                          | No       | `50`     |
+| Input | Description | Required | Default |
+| --- | --- | --- | --- |
+| `input-file` | Path to the JSON file created by Salesforce Code Analyzer. | Yes | |
+| `output-file` | Path to the output file this action creates. Defaults per `format` (see [Command Reference](#command-reference)). | No | |
+| `format` | Output format to produce: `sonar`, `sarif`, `codeclimate`, `junit`, or `github`. | No | `sonar` |
+| `fail-on` | Fail the action when any violation has the given severity or higher. | No | `never` |
+| `strip-prefix` | Strip a leading prefix from every violation file path. Mutually exclusive with `project-relative`. | No | |
+| `project-relative` | Make every violation file path relative to the Salesforce DX project root. Mutually exclusive with `strip-prefix`. | No | `false` |
+| `max-annotations` | Maximum number of `format: github` annotations to emit. | No | `50` |
 
 ### Outputs
 
-| Output        | Description                                                          |
-| -------------- | ---------------------------------------------------------------------- |
-| `output-path`  | Path to the transformed report (empty when `format: github` writes to stdout instead of a file). |
-| `violations`   | Total number of violations in the input report.                      |
-| `failures`     | Number of violations at or above the `fail-on` severity threshold.   |
-| `warnings`     | Newline-separated list of warnings emitted while transforming, if any. |
-
-### Example: fail the build on high-severity findings
-
-```yaml
-- name: Run Code Analyzer
-  uses: forcedotcom/run-code-analyzer@v1
-  with:
-    run-command: run
-    run-arguments: --workspace ./force-app/main/default/ --rule-selector Recommended --output-file analyzer.json
-
-- name: Transform to SARIF and fail on high severity
-  id: transform
-  uses: mcarvin8/sf-cat@v2
-  with:
-    input-file: analyzer.json
-    format: sarif
-    output-file: results.sarif
-    fail-on: high
-
-- name: Upload SARIF
-  if: always()
-  uses: github/codeql-action/upload-sarif@v3
-  with:
-    sarif_file: results.sarif
-```
+| Output | Description |
+| --- | --- |
+| `output-path` | Path to the transformed report (empty when `format: github` writes to stdout instead of a file). |
+| `violations` | Total number of violations in the input report. |
+| `failures` | Number of violations at or above the `fail-on` severity threshold. |
+| `warnings` | Newline-separated list of warnings emitted while transforming, if any. |
 
 ## How It Works
 
