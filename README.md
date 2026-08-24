@@ -415,7 +415,7 @@ Line-level locations are preserved, while potentially invalid column data is omi
 
 Transform Salesforce Code Analyzer results into a code quality format such as SonarQube, SARIF, CodeClimate / GitLab Code Quality, JUnit XML, or GitHub Actions workflow commands.
 
-```text
+```
 USAGE
   $ sf cat transform -i <value> [--json] [--flags-dir <value>] [-o <value>] [-f
     sonar|sarif|codeclimate|junit|github] [--fail-on critical|high|moderate|low|info|never] [--strip-prefix <value> |
