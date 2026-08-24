@@ -1,4 +1,15 @@
-import { CodeAnalyzerOutput } from '../../src/utils/types.js';
+import { CodeAnalyzerOutput, Violation } from '../../src/utils/types.js';
+
+export const mkViolation = (overrides: Partial<Violation> = {}): Violation => ({
+  rule: 'R',
+  engine: 'pmd',
+  severity: 2,
+  tags: ['security'],
+  primaryLocationIndex: 0,
+  message: 'msg',
+  locations: [{ file: 'a.cls', startLine: 1 }],
+  ...overrides,
+});
 
 export const mockAnalyzerInput: CodeAnalyzerOutput = {
   violations: [

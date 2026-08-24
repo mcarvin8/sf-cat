@@ -2,7 +2,7 @@ import type { Log } from 'sarif';
 import { describe, expect, it } from 'vitest';
 import { convertToSarif } from '../../../src/utils/formats/sarif.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { mockAnalyzerInput } from '../fixtures.js';
+import { mkViolation, mockAnalyzerInput } from '../fixtures.js';
 
 describe('convertToSarif unit tests', () => {
   it('should produce a valid SARIF v2.1.0 log skeleton', () => {
@@ -21,24 +21,20 @@ describe('convertToSarif unit tests', () => {
   it('should map severity 3 (moderate) to "warning" and 5 (info) to "note"', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
+        mkViolation({
           rule: 'ModerateRule',
-          engine: 'pmd',
           severity: 3,
           tags: ['design'],
-          primaryLocationIndex: 0,
           message: 'Moderate issue',
           locations: [{ file: 'a.cls', startLine: 1 }],
-        },
-        {
+        }),
+        mkViolation({
           rule: 'InfoRule',
-          engine: 'pmd',
           severity: 5,
           tags: ['documentation'],
-          primaryLocationIndex: 0,
           message: 'Info issue',
           locations: [{ file: 'b.cls', startLine: 2 }],
-        },
+        }),
       ],
     };
     const log = convertToSarif(input);
@@ -49,24 +45,15 @@ describe('convertToSarif unit tests', () => {
   it('should group violations into one run per engine', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
-          rule: 'R1',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'pmd issue',
-          locations: [{ file: 'a.cls', startLine: 1 }],
-        },
-        {
+        mkViolation({ rule: 'R1', message: 'pmd issue', locations: [{ file: 'a.cls', startLine: 1 }] }),
+        mkViolation({
           rule: 'R2',
           engine: 'eslint',
           severity: 3,
           tags: ['design'],
-          primaryLocationIndex: 0,
           message: 'eslint issue',
           locations: [{ file: 'b.js', startLine: 2 }],
-        },
+        }),
       ],
     };
     const log = convertToSarif(input);
@@ -78,24 +65,8 @@ describe('convertToSarif unit tests', () => {
   it('should deduplicate rules within a single run', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
-          rule: 'SameRule',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'msg',
-          locations: [{ file: 'a.cls', startLine: 1 }],
-        },
-        {
-          rule: 'SameRule',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'msg',
-          locations: [{ file: 'b.cls', startLine: 2 }],
-        },
+        mkViolation({ rule: 'SameRule', locations: [{ file: 'a.cls', startLine: 1 }] }),
+        mkViolation({ rule: 'SameRule', locations: [{ file: 'b.cls', startLine: 2 }] }),
       ],
     };
     const log = convertToSarif(input);
@@ -107,24 +78,8 @@ describe('convertToSarif unit tests', () => {
   it('should use first violation message for rule descriptions when deduplicating', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
-          rule: 'DupRule',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'first message',
-          locations: [{ file: 'a.cls', startLine: 1 }],
-        },
-        {
-          rule: 'DupRule',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'second message',
-          locations: [{ file: 'b.cls', startLine: 2 }],
-        },
+        mkViolation({ rule: 'DupRule', message: 'first message', locations: [{ file: 'a.cls', startLine: 1 }] }),
+        mkViolation({ rule: 'DupRule', message: 'second message', locations: [{ file: 'b.cls', startLine: 2 }] }),
       ],
     };
     const log = convertToSarif(input);
@@ -136,17 +91,7 @@ describe('convertToSarif unit tests', () => {
 
   it('should normalize Windows-style backslash paths to forward slashes', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'msg',
-          locations: [{ file: 'force-app\\main\\default\\classes\\X.cls', startLine: 1 }],
-        },
-      ],
+      violations: [mkViolation({ locations: [{ file: 'force-app\\main\\default\\classes\\X.cls', startLine: 1 }] })],
     };
     const log = convertToSarif(input);
     const uri = log.runs[0].results?.[0].locations?.[0].physicalLocation?.artifactLocation?.uri;
@@ -162,17 +107,7 @@ describe('convertToSarif unit tests', () => {
 
   it('should default missing endLine to startLine', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'msg',
-          locations: [{ file: 'a.cls', startLine: 7 }],
-        },
-      ],
+      violations: [mkViolation({ locations: [{ file: 'a.cls', startLine: 7 }] })],
     };
     const log = convertToSarif(input);
     const region = log.runs[0].results?.[0].locations?.[0].physicalLocation?.region;
@@ -184,15 +119,12 @@ describe('convertToSarif unit tests', () => {
 describe('convertToSarif field completeness', () => {
   const input: CodeAnalyzerOutput = {
     violations: [
-      {
+      mkViolation({
         rule: 'MyRule',
-        engine: 'pmd',
         severity: 3,
-        tags: ['security'],
-        primaryLocationIndex: 0,
         message: 'Something is wrong',
         locations: [{ file: 'a.cls', startLine: 5, endLine: 10 }],
-      },
+      }),
     ],
   };
 
