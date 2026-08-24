@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { convertToGitHubAnnotations, serializeGitHubAnnotations } from '../../../src/utils/formats/github.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { mockAnalyzerInput } from '../fixtures.js';
+import { mkViolation, mockAnalyzerInput } from '../fixtures.js';
 
 describe('convertToGitHubAnnotations unit tests', () => {
   it('should produce one annotation per violation with mapped fields', () => {
@@ -19,15 +19,9 @@ describe('convertToGitHubAnnotations unit tests', () => {
 
   it('should map analyzer severities to GitHub annotation levels', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [1, 2, 3, 4, 5].map((sev, i) => ({
-        rule: `R${sev}`,
-        engine: 'pmd',
-        severity: sev,
-        tags: ['security'],
-        primaryLocationIndex: 0,
-        message: 'msg',
-        locations: [{ file: 'a.cls', startLine: i + 1 }],
-      })),
+      violations: [1, 2, 3, 4, 5].map((sev, i) =>
+        mkViolation({ rule: `R${sev}`, severity: sev, locations: [{ file: 'a.cls', startLine: i + 1 }] }),
+      ),
     };
     const out = convertToGitHubAnnotations(input);
     expect(out.map((a) => a.level)).toEqual(['error', 'error', 'warning', 'notice', 'notice']);
@@ -35,17 +29,7 @@ describe('convertToGitHubAnnotations unit tests', () => {
 
   it('should normalize Windows-style backslash paths to forward slashes', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'msg',
-          locations: [{ file: 'force-app\\main\\default\\classes\\X.cls', startLine: 1 }],
-        },
-      ],
+      violations: [mkViolation({ locations: [{ file: 'force-app\\main\\default\\classes\\X.cls', startLine: 1 }] })],
     };
     const out = convertToGitHubAnnotations(input);
     expect(out[0].file).toBe('force-app/main/default/classes/X.cls');
@@ -53,17 +37,7 @@ describe('convertToGitHubAnnotations unit tests', () => {
 
   it('should default missing endLine to startLine', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'msg',
-          locations: [{ file: 'a.cls', startLine: 7 }],
-        },
-      ],
+      violations: [mkViolation({ locations: [{ file: 'a.cls', startLine: 7 }] })],
     };
     const out = convertToGitHubAnnotations(input);
     expect(out[0].line).toBe(7);
@@ -90,15 +64,11 @@ describe('serializeGitHubAnnotations unit tests', () => {
   it('should escape "%", ":", and "," in property values', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
+        mkViolation({
           rule: 'rule:with,commas%signs',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
           message: 'plain message',
           locations: [{ file: 'a:b,c%d.cls', startLine: 1 }],
-        },
+        }),
       ],
     };
     const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
@@ -108,17 +78,7 @@ describe('serializeGitHubAnnotations unit tests', () => {
 
   it('should escape "%" before other replacements (no double-encoding)', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [
-        {
-          rule: '%foo,bar',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'msg',
-          locations: [{ file: 'x.cls', startLine: 1 }],
-        },
-      ],
+      violations: [mkViolation({ rule: '%foo,bar', locations: [{ file: 'x.cls', startLine: 1 }] })],
     };
     const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
     expect(out).toContain('title=%25foo%2Cbar');
@@ -127,17 +87,7 @@ describe('serializeGitHubAnnotations unit tests', () => {
 
   it('should NOT escape ":" or "," in the message body (only %, CR, LF)', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'see: a, b, c',
-          locations: [{ file: 'x.cls', startLine: 1 }],
-        },
-      ],
+      violations: [mkViolation({ message: 'see: a, b, c', locations: [{ file: 'x.cls', startLine: 1 }] })],
     };
     const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
     expect(out.trimEnd().endsWith('::see: a, b, c')).toBe(true);
@@ -145,17 +95,7 @@ describe('serializeGitHubAnnotations unit tests', () => {
 
   it('should encode CR/LF in message bodies as %0D / %0A', () => {
     const input: CodeAnalyzerOutput = {
-      violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'line1\nline2\r\nline3',
-          locations: [{ file: 'x.cls', startLine: 1 }],
-        },
-      ],
+      violations: [mkViolation({ message: 'line1\nline2\r\nline3', locations: [{ file: 'x.cls', startLine: 1 }] })],
     };
     const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
     expect(out).toContain('line1%0Aline2%0D%0Aline3');
@@ -164,15 +104,7 @@ describe('serializeGitHubAnnotations unit tests', () => {
   it('should encode CR and LF in property values (file path)', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: [],
-          primaryLocationIndex: 0,
-          message: 'm',
-          locations: [{ file: 'force-app\r\nmain/X.cls', startLine: 1 }],
-        },
+        mkViolation({ tags: [], message: 'm', locations: [{ file: 'force-app\r\nmain/X.cls', startLine: 1 }] }),
       ],
     };
     const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
@@ -182,15 +114,7 @@ describe('serializeGitHubAnnotations unit tests', () => {
   it('should encode % in message bodies as %25', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
-          rule: 'R',
-          engine: 'pmd',
-          severity: 2,
-          tags: [],
-          primaryLocationIndex: 0,
-          message: 'coverage is 80% today',
-          locations: [{ file: 'x.cls', startLine: 1 }],
-        },
+        mkViolation({ tags: [], message: 'coverage is 80% today', locations: [{ file: 'x.cls', startLine: 1 }] }),
       ],
     };
     const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
@@ -200,24 +124,14 @@ describe('serializeGitHubAnnotations unit tests', () => {
   it('should join multiple annotations with newlines (one per line)', () => {
     const input: CodeAnalyzerOutput = {
       violations: [
-        {
-          rule: 'R1',
-          engine: 'pmd',
-          severity: 2,
-          tags: ['security'],
-          primaryLocationIndex: 0,
-          message: 'm1',
-          locations: [{ file: 'a.cls', startLine: 1 }],
-        },
-        {
+        mkViolation({ rule: 'R1', message: 'm1', locations: [{ file: 'a.cls', startLine: 1 }] }),
+        mkViolation({
           rule: 'R2',
-          engine: 'pmd',
           severity: 4,
           tags: ['style'],
-          primaryLocationIndex: 0,
           message: 'm2',
           locations: [{ file: 'b.cls', startLine: 2 }],
-        },
+        }),
       ],
     };
     const out = serializeGitHubAnnotations(convertToGitHubAnnotations(input));
@@ -235,15 +149,9 @@ describe('serializeGitHubAnnotations unit tests', () => {
 
   it('slicing annotations to max-annotations cap should truncate output', () => {
     const input: CodeAnalyzerOutput = {
-      violations: Array.from({ length: 5 }, (_, i) => ({
-        rule: `R${i}`,
-        engine: 'pmd',
-        severity: 2,
-        tags: ['security'],
-        primaryLocationIndex: 0,
-        message: `msg${i}`,
-        locations: [{ file: `file${i}.cls`, startLine: i + 1 }],
-      })),
+      violations: Array.from({ length: 5 }, (_, i) =>
+        mkViolation({ rule: `R${i}`, message: `msg${i}`, locations: [{ file: `file${i}.cls`, startLine: i + 1 }] }),
+      ),
     };
     const all = convertToGitHubAnnotations(input);
     expect(all).toHaveLength(5);
