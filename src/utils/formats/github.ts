@@ -1,3 +1,4 @@
+import { resolveEndLine, resolveFile, resolveStartLine } from '../location.js';
 import { GitHubLevel, githubLevel, normalizeSeverity } from '../severity.js';
 import { CodeAnalyzerOutput, Violation } from '../types.js';
 
@@ -16,9 +17,9 @@ function buildAnnotation(v: Violation): GitHubAnnotation {
   const loc = v.locations[v.primaryLocationIndex];
   return {
     level: githubLevel[normalizeSeverity(v.severity)],
-    file: loc.file.replace(/\\/g, '/'),
-    line: loc.startLine,
-    endLine: loc.endLine ?? loc.startLine,
+    file: resolveFile(loc).replace(/\\/g, '/'),
+    line: resolveStartLine(loc),
+    endLine: resolveEndLine(loc),
     // columns are intentionally dropped — Code Analyzer columns are routinely
     // out-of-bounds and GitHub silently skips annotations with bad columns
     title: v.rule,

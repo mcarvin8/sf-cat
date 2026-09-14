@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { convertToCodeClimate } from '../../../src/utils/formats/codeclimate.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { mkViolation, mockAnalyzerInput } from '../fixtures.js';
+import { mkEngineErrorViolation, mkViolation, mockAnalyzerInput } from '../fixtures.js';
 
 describe('convertToCodeClimate unit tests', () => {
   it('should produce a CodeClimate-shaped issue array', () => {
@@ -91,6 +91,13 @@ describe('convertToCodeClimate unit tests', () => {
 
   it('should produce an empty array for empty input', () => {
     expect(convertToCodeClimate({ violations: [] })).toEqual([]);
+  });
+
+  it('should not throw and should fall back to placeholders for a location-less engine-error violation', () => {
+    const input: CodeAnalyzerOutput = { violations: [mkEngineErrorViolation()] };
+    expect(() => convertToCodeClimate(input)).not.toThrow();
+    const out = convertToCodeClimate(input);
+    expect(out[0].location).toEqual({ path: '<unknown>', lines: { begin: 1, end: 1 } });
   });
 });
 

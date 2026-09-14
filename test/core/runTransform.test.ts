@@ -175,6 +175,38 @@ describe('runTransform', () => {
     expect(result.failures).toBe(1);
   });
 
+  it('converts a report containing a location-less engine-error violation without crashing', async () => {
+    // Mirrors what Code Analyzer core actually writes to analyzer.json when an
+    // engine fails to instantiate or throws unexpectedly mid-run: a synthetic
+    // violation whose location has no `file`/`startLine` at all.
+    await writeInput({
+      violations: [
+        ...mockAnalyzerInput.violations,
+        {
+          rule: 'UnexpectedEngineError',
+          engine: 'pmd',
+          severity: 1,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'The pmd engine threw an unexpected error while running rules',
+          locations: [{}],
+        },
+      ],
+    });
+    const outputFile = join(dir, 'sonar.json');
+
+    const result = await runTransform({
+      inputFile,
+      outputFile,
+      format: 'sonar',
+      failOn: 'never',
+    });
+
+    expect(result.violations).toBe(2);
+    const written = JSON.parse(await readFile(outputFile, 'utf8')) as { issues: unknown[] };
+    expect(written.issues).toHaveLength(2);
+  });
+
   it('reports zero failures and does not warn when the threshold is never met', async () => {
     await writeInput(mockAnalyzerInput);
     const outputFile = join(dir, 'sonar.json');

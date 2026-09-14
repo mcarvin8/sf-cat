@@ -1,3 +1,4 @@
+import { resolveFile, resolveStartLine } from '../location.js';
 import { NormalizedSeverity, normalizeSeverity } from '../severity.js';
 import { CodeAnalyzerOutput, Violation } from '../types.js';
 
@@ -31,8 +32,8 @@ const SUITE_NAME = 'Salesforce Code Analyzer';
 
 function buildTestcase(v: Violation): JUnitTestcase {
   const loc = v.locations[v.primaryLocationIndex];
-  const file = loc.file.replace(/\\/g, '/');
-  const line = loc.startLine;
+  const file = resolveFile(loc).replace(/\\/g, '/');
+  const line = resolveStartLine(loc);
   const severity = normalizeSeverity(v.severity);
 
   const body = [

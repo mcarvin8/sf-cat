@@ -1,3 +1,4 @@
+import { resolveEndLine, resolveFile, resolveStartLine } from '../location.js';
 import { IssueType, mapIssueType, mapSonarSoftwareQualities, normalizeSeverity, sonarSeverity } from '../severity.js';
 import { CodeAnalyzerOutput } from '../types.js';
 
@@ -74,10 +75,10 @@ export function convertToSonarQube(input: CodeAnalyzerOutput): SonarQubeReport {
       type: issueType,
       primaryLocation: {
         message: v.message,
-        filePath: loc.file.replace(/\\/g, '/'),
+        filePath: resolveFile(loc).replace(/\\/g, '/'),
         textRange: {
-          startLine: loc.startLine,
-          endLine: loc.endLine ?? loc.startLine,
+          startLine: resolveStartLine(loc),
+          endLine: resolveEndLine(loc),
         },
       },
     });
