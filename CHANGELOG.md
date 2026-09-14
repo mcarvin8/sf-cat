@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/mcarvin8/sf-cat/compare/v2.1.1...v2.1.2) (2026-09-14)
+
+
+### Bug Fixes
+
+* **formats:** guard against location-less engine-error violations ([#44](https://github.com/mcarvin8/sf-cat/issues/44)) ([7d7d4fb](https://github.com/mcarvin8/sf-cat/commit/7d7d4fbc72ce16dad8ba95ac6d5c2b3727f4720e))
+
 ## [2.1.1](https://github.com/mcarvin8/sf-cat/compare/v2.1.0...v2.1.1) (2026-08-22)
 
 
