@@ -35,7 +35,10 @@ export function normalizePaths(input: CodeAnalyzerOutput, opts: PathRewriteOptio
       ...v,
       locations: v.locations.map((loc) => ({
         ...loc,
-        file: stripLeadingPrefix(loc.file, prefix),
+        // `file` is absent on the location-less violations Code Analyzer emits
+        // when an engine fails unexpectedly (see utils/location.ts) — leave
+        // those untouched instead of stripping a prefix from `undefined`.
+        file: loc.file === undefined ? loc.file : stripLeadingPrefix(loc.file, prefix),
       })),
     })),
   };

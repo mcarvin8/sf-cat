@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { convertToJUnit, serializeJUnit } from '../../../src/utils/formats/junit.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { mockAnalyzerInput } from '../fixtures.js';
+import { mkEngineErrorViolation, mockAnalyzerInput } from '../fixtures.js';
 
 describe('convertToJUnit unit tests', () => {
   it('should produce a single testsuite per engine with one testcase per violation', () => {
@@ -221,5 +221,15 @@ describe('serializeJUnit unit tests', () => {
     const report = convertToJUnit(mockAnalyzerInput);
     const body = report.testsuites[0].testcases[0].failure.body;
     expect(body).toContain('AvoidOldSalesforceApiVersions (regex, severity high)\n');
+  });
+
+  it('should not throw and should fall back to placeholders for a location-less engine-error violation', () => {
+    const input: CodeAnalyzerOutput = { violations: [mkEngineErrorViolation()] };
+    expect(() => convertToJUnit(input)).not.toThrow();
+    const report = convertToJUnit(input);
+    expect(report.testsuites[0].testcases[0]).toMatchObject({
+      classname: '<unknown>',
+      name: 'UnexpectedEngineError:1',
+    });
   });
 });

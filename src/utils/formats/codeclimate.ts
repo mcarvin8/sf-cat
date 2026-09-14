@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { resolveEndLine, resolveFile, resolveStartLine } from '../location.js';
 import {
   CodeClimateCategory,
   CodeClimateSeverity,
@@ -47,9 +48,9 @@ export function convertToCodeClimate(input: CodeAnalyzerOutput): CodeClimateRepo
 
   for (const v of input.violations) {
     const loc = v.locations[v.primaryLocationIndex];
-    const path = loc.file.replace(/\\/g, '/');
-    const begin = loc.startLine;
-    const end = loc.endLine ?? loc.startLine;
+    const path = resolveFile(loc).replace(/\\/g, '/');
+    const begin = resolveStartLine(loc);
+    const end = resolveEndLine(loc);
 
     issues.push({
       type: 'issue',

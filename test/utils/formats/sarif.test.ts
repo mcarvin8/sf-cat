@@ -2,7 +2,7 @@ import type { Log } from 'sarif';
 import { describe, expect, it } from 'vitest';
 import { convertToSarif } from '../../../src/utils/formats/sarif.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { mkViolation, mockAnalyzerInput } from '../fixtures.js';
+import { mkEngineErrorViolation, mkViolation, mockAnalyzerInput } from '../fixtures.js';
 
 describe('convertToSarif unit tests', () => {
   it('should produce a valid SARIF v2.1.0 log skeleton', () => {
@@ -113,6 +113,15 @@ describe('convertToSarif unit tests', () => {
     const region = log.runs[0].results?.[0].locations?.[0].physicalLocation?.region;
     expect(region?.startLine).toBe(7);
     expect(region?.endLine).toBe(7);
+  });
+
+  it('should not throw and should fall back to placeholders for a location-less engine-error violation', () => {
+    const input: CodeAnalyzerOutput = { violations: [mkEngineErrorViolation()] };
+    expect(() => convertToSarif(input)).not.toThrow();
+    const log = convertToSarif(input);
+    const result = log.runs[0].results?.[0];
+    expect(result?.locations?.[0].physicalLocation?.artifactLocation?.uri).toBe('<unknown>');
+    expect(result?.locations?.[0].physicalLocation?.region).toEqual({ startLine: 1, endLine: 1 });
   });
 });
 

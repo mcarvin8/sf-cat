@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { convertToSonarQube, SonarQubeReport } from '../../../src/utils/formats/sonar.js';
 import { mapSonarSoftwareQualities } from '../../../src/utils/severity.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { mockAnalyzerInput } from '../fixtures.js';
+import { mkEngineErrorViolation, mockAnalyzerInput } from '../fixtures.js';
 
 describe('convertToSonarQube unit tests', () => {
   let tempInputPath: string;
@@ -191,6 +191,14 @@ describe('convertToSonarQube unit tests', () => {
     };
     const output = convertToSonarQube(input);
     expect(output.issues[0].primaryLocation.textRange).toEqual({ startLine: 7, endLine: 7 });
+  });
+
+  it('should not throw and should fall back to placeholders for a location-less engine-error violation', () => {
+    const input: CodeAnalyzerOutput = { violations: [mkEngineErrorViolation()] };
+    expect(() => convertToSonarQube(input)).not.toThrow();
+    const output = convertToSonarQube(input);
+    expect(output.issues[0].primaryLocation.filePath).toBe('<unknown>');
+    expect(output.issues[0].primaryLocation.textRange).toEqual({ startLine: 1, endLine: 1 });
   });
 });
 

@@ -115,6 +115,27 @@ describe('normalizePaths unit tests', () => {
     const out = normalizePaths(input, { stripPrefix: '/' });
     expect(out).toBe(input);
   });
+
+  it('should not throw and should leave a location with no file untouched when stripping a prefix', () => {
+    // Mirrors the location-less violation Code Analyzer core emits for
+    // UninstantiableEngineError/UnexpectedEngineError (no `file` key at all).
+    const input: CodeAnalyzerOutput = {
+      violations: [
+        {
+          rule: 'UnexpectedEngineError',
+          engine: 'pmd',
+          severity: 1,
+          tags: [],
+          primaryLocationIndex: 0,
+          message: 'msg',
+          locations: [{}],
+        },
+      ],
+    };
+    expect(() => normalizePaths(input, { stripPrefix: '/repo/' })).not.toThrow();
+    const out = normalizePaths(input, { stripPrefix: '/repo/' });
+    expect(out.violations[0].locations[0].file).toBeUndefined();
+  });
 });
 
 describe('normalizePaths --project-relative integration', () => {

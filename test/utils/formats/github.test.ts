@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { convertToGitHubAnnotations, serializeGitHubAnnotations } from '../../../src/utils/formats/github.js';
 import { CodeAnalyzerOutput } from '../../../src/utils/types.js';
-import { mkViolation, mockAnalyzerInput } from '../fixtures.js';
+import { mkEngineErrorViolation, mkViolation, mockAnalyzerInput } from '../fixtures.js';
 
 describe('convertToGitHubAnnotations unit tests', () => {
   it('should produce one annotation per violation with mapped fields', () => {
@@ -46,6 +46,13 @@ describe('convertToGitHubAnnotations unit tests', () => {
 
   it('should produce an empty array for empty input', () => {
     expect(convertToGitHubAnnotations({ violations: [] })).toEqual([]);
+  });
+
+  it('should not throw and should fall back to placeholders for a location-less engine-error violation', () => {
+    const input: CodeAnalyzerOutput = { violations: [mkEngineErrorViolation()] };
+    expect(() => convertToGitHubAnnotations(input)).not.toThrow();
+    const out = convertToGitHubAnnotations(input);
+    expect(out[0]).toMatchObject({ file: '<unknown>', line: 1, endLine: 1, level: 'error' });
   });
 });
 

@@ -1,4 +1,5 @@
 import type { Log, ReportingDescriptor, Result, Run } from 'sarif';
+import { resolveEndLine, resolveFile, resolveStartLine } from '../location.js';
 import { mapIssueType, normalizeSeverity, sarifLevel } from '../severity.js';
 import { CodeAnalyzerOutput, Violation } from '../types.js';
 
@@ -26,8 +27,8 @@ function buildRule(v: Violation): ReportingDescriptor {
 
 function buildResult(v: Violation): Result {
   const loc = v.locations[v.primaryLocationIndex];
-  const startLine = loc.startLine;
-  const endLine = loc.endLine ?? loc.startLine;
+  const startLine = resolveStartLine(loc);
+  const endLine = resolveEndLine(loc);
 
   return {
     ruleId: v.rule,
@@ -36,7 +37,7 @@ function buildResult(v: Violation): Result {
     locations: [
       {
         physicalLocation: {
-          artifactLocation: { uri: loc.file.replace(/\\/g, '/') },
+          artifactLocation: { uri: resolveFile(loc).replace(/\\/g, '/') },
           region: { startLine, endLine },
         },
       },

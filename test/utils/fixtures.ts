@@ -11,6 +11,24 @@ export const mkViolation = (overrides: Partial<Violation> = {}): Violation => ({
   ...overrides,
 });
 
+/**
+ * Shape of the synthetic violation Code Analyzer core emits when an engine
+ * fails to instantiate or throws unexpectedly mid-run (rule
+ * `UninstantiableEngineError` / `UnexpectedEngineError`). Its location has no
+ * `file`/`startLine`/etc. — `JSON.stringify` drops the `undefined` keys, so
+ * a location like this is exactly what round-trips through `analyzer.json`.
+ */
+export const mkEngineErrorViolation = (overrides: Partial<Violation> = {}): Violation => ({
+  rule: 'UnexpectedEngineError',
+  engine: 'pmd',
+  severity: 1,
+  tags: [],
+  primaryLocationIndex: 0,
+  message: 'The pmd engine threw an unexpected error while running rules: some underlying failure',
+  locations: [{}],
+  ...overrides,
+});
+
 export const mockAnalyzerInput: CodeAnalyzerOutput = {
   violations: [
     {
