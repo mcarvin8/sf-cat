@@ -478,7 +478,7 @@ EXAMPLES
   `sf cat transform -i "sf-code-analyzer.json" --project-relative`
 ```
 
-_See code: [src/commands/cat/transform.ts](https://github.com/mcarvin8/sf-cat/blob/v2.1.1/src/commands/cat/transform.ts)_
+_See code: [src/commands/cat/transform.ts](https://github.com/mcarvin8/sf-cat/blob/v2.1.2/src/commands/cat/transform.ts)_
 <!-- commandsstop -->
 
 ## Issues
